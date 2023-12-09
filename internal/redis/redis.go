@@ -103,7 +103,7 @@ func Set(key string, value string, second int) error {
 func Get(key string) (string, bool, error) {
 	val, err := iClient.Get(context.Background(), key).Result()
 
-	if err == redis.Nil {
+	if errors.Is(err, redis.Nil) {
 		return "", false, nil
 	} else if err != nil {
 		return "", false, err
