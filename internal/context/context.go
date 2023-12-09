@@ -13,6 +13,7 @@ import (
 	"strings"
 	"swagger/internal/log/bufWriter"
 	"swagger/internal/snowflake"
+	"time"
 	"unicode/utf8"
 )
 
@@ -21,6 +22,7 @@ type Context struct {
 	Ctx            context.Context
 	ResponseWriter http.ResponseWriter
 	Request        *http.Request
+	StartTime      time.Time //记录请求开始处理时间
 
 	Path   string
 	Method string
@@ -48,6 +50,7 @@ func NewContext(w http.ResponseWriter, r *http.Request, structName string, final
 		Ctx:            context.Background(),
 		ResponseWriter: w,
 		Request:        r,
+		StartTime:      time.Now(),
 		RequestId:      snowflake.ID(),
 		Method:         r.Method,
 		Path:           r.URL.Path,

@@ -18,6 +18,7 @@ import (
 	"swagger/internal/log/bufWriter"
 	"swagger/internal/middleware"
 	"swagger/internal/router"
+	"time"
 )
 
 // http请求处理器
@@ -36,6 +37,39 @@ type Handle struct {
 	httpReturn HttpReturn
 }
 
+const (
+	StatusZero     int = 0
+	StatusOk       int = 200
+	StatusNotFound int = 404
+	StatusFail     int = 500
+)
+
+// 请求结束处理 记录日志
+func preEnd(ctx *context.Context, status int, err error) {
+	switch status {
+	case StatusFail:
+		Handler.httpReturn.End500(ctx, err)
+	case StatusNotFound:
+		Handler.httpReturn.End404(ctx, err)
+	case StatusZero, StatusOk:
+		Handler.httpReturn.End(ctx)
+	default:
+		Handler.httpReturn.End(ctx)
+	}
+
+	bufWriter.Info("",
+		slog.Int("status", status),
+		slog.String("takeTime", time.Since(ctx.StartTime).String()),
+		slog.String("structName", ctx.StructName),
+		slog.String("methodName", ctx.MethodName),
+		slog.String("requestId", ctx.RequestId),
+		slog.String("method", ctx.Request.Method),
+		slog.String("url", ctx.Request.URL.String()),
+		slog.String("ip", ctx.ClientIp),
+		slog.String("user-agent", ctx.Request.UserAgent()),
+	)
+}
+
 // 请求处理入口
 func (h *Handle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	/******特殊处理url******/
@@ -45,18 +79,10 @@ func (h *Handle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	/************/
 
-	// 请求日志
-	bufWriter.Info("[REQUEST]",
-		slog.String("method", r.Method),
-		slog.String("url", r.URL.String()),
-		slog.String("ip", cFunc.ClientIP(r)),
-		slog.String("user-agent", r.UserAgent()),
-	)
-
 	//调用全局中间件
 	for _, m := range middleware.GlobalMiddleware {
 		if !m.Handle(w, r) {
-			Handler.httpReturn.End(context.NewContext(w, r, "", "", ""))
+			preEnd(context.NewContext(w, r, "", "", ""), 0, nil)
 			return
 		}
 	}
@@ -67,9 +93,8 @@ func (h *Handle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// 解析出有类和方法 进入handler匹配
 	if structName != "" && methodName != "" {
 		callStructName, finalStructName, has, err := checkMethod(structName, methodName, args...)
-		//fmt.Println("检查方法", has, err, structName, methodName, args)
 		if err != nil {
-			Handler.httpReturn.End404(context.NewContext(w, r, structName, "", methodName), err)
+			preEnd(context.NewContext(w, r, structName, "", methodName), StatusNotFound, err)
 			return
 		}
 
@@ -90,8 +115,7 @@ func (h *Handle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// 解析前端路由和文件处理
 	f, err := staticFile(r.URL.Path)
 	if err != nil {
-		ctx := context.NewContext(w, r, "", "", "")
-		Handler.httpReturn.End404(ctx, err)
+		preEnd(context.NewContext(w, r, "", "", ""), StatusNotFound, err)
 		return
 	}
 	http.ServeFile(w, r, f)
@@ -101,7 +125,6 @@ func (h *Handle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func execCall(w http.ResponseWriter, r *http.Request, structName string, finalStructName string, methodName string, middle []middleware.Middleware, args ...string) {
 	//生成context
 	ctx := context.NewContext(w, r, hss[structName].name, finalStructName, methodName)
-	//r.WithContext(ctx.Ctx)
 
 	var err error
 
@@ -132,21 +155,10 @@ func execCall(w http.ResponseWriter, r *http.Request, structName string, finalSt
 		}
 	}()
 
-	// 记录请求解析后的日志
-	bufWriter.Info("[REQUEST CALL]",
-		slog.String("structName", ctx.StructName),
-		slog.String("methodName", ctx.MethodName),
-		slog.String("requestId", ctx.RequestId),
-		slog.String("method", r.Method),
-		slog.String("url", r.URL.String()),
-		slog.String("ip", ctx.ClientIp),
-		slog.String("user-agent", r.UserAgent()),
-	)
-
 	//调用中间件处理
 	for _, m := range middle {
 		if !m.Handle(ctx) {
-			Handler.httpReturn.End(ctx)
+			preEnd(ctx, 0, nil)
 			return
 		}
 	}
@@ -154,12 +166,11 @@ func execCall(w http.ResponseWriter, r *http.Request, structName string, finalSt
 	//调用方法
 	err = hss[structName].call(ctx, methodName, args...)
 	if err != nil {
-		Handler.httpReturn.End500(context.NewContext(w, r, structName, finalStructName, methodName), err)
+		preEnd(context.NewContext(w, r, structName, finalStructName, methodName), StatusFail, err)
 		return
 	}
 
-	// 统一处理返回信息
-	Handler.httpReturn.End(ctx)
+	preEnd(ctx, 0, nil)
 }
 
 // 解析静态文件或路由转发给前端
