@@ -143,12 +143,12 @@ func getCurUserKey() (*curUserRootKey, error) {
 
 	_, err := os.Stat(privateKeyFile)
 	if err != nil {
-		return nil, errors.New(("获取当前用户下的私钥文件失败" + err.Error()))
+		return nil, errors.New("获取当前用户下的私钥文件失败" + err.Error())
 	}
 
 	_, err = os.Stat(publicKeyFile)
 	if err != nil {
-		return nil, errors.New(("获取当前用户下的公钥文件失败" + err.Error()))
+		return nil, errors.New("获取当前用户下的公钥文件失败" + err.Error())
 	}
 
 	priKey, _ := os.ReadFile(privateKeyFile)
