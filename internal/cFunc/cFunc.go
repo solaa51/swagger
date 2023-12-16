@@ -713,7 +713,7 @@ func ParseSimpleJson(jsonStr string) (map[string]string, error) {
 		key := strings.ReplaceAll(strings.TrimSpace(vv[0]), `"`, "")
 		val := strings.ReplaceAll(strings.TrimSpace(vv[1]), `"`, "")
 		if val == "{{}}" {
-			arr[key] = subStr[rPIndex]
+			arr[key] = strings.TrimSpace(subStr[rPIndex])
 			rPIndex++
 		} else {
 			arr[key] = val

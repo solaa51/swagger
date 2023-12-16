@@ -175,6 +175,10 @@ func (c *Context) CheckField(fields []*CheckField) (map[string]any, error) {
 					err = errors.New(v.Desc + "无法通过规则校验")
 				}
 			}
+		case CheckArrayInt:
+			_, value, err = c.ParamDataArrayInt(v.Name, v.Desc, v.Request, v.Min, v.Max)
+		case CheckArrayString:
+			_, value, err = c.ParamDataArrayString(v.Name, v.Desc, v.Request, v.Min, v.Max, v.Reg)
 		default:
 			return nil, errors.New("暂不支持的检查类型：" + v.Name)
 		}
@@ -189,14 +193,97 @@ func (c *Context) CheckField(fields []*CheckField) (map[string]any, error) {
 	return ret, nil
 }
 
+func (c *Context) ParamDataArrayString(name string, desc string, require bool, min int64, max int64, reg string) (bool, []string, error) {
+	exist, value, err := c.getParam(name)
+	if err != nil {
+		return false, []string{}, errors.New("无法获取参数")
+	}
+
+	if require && !exist {
+		return false, []string{}, errors.New(desc + "不能为空")
+	}
+
+	if max == 0 { //限定下 数据库存储 普通情况 最大65535
+		max = 65535
+	}
+
+	var rc *regexp.Regexp
+	if reg != "" {
+		rc, err = regexp.Compile(reg)
+		if err != nil {
+			return exist, []string{}, errors.New("正则规则错误")
+		}
+	}
+
+	ret := make([]string, 0)
+	is := strings.Split(value, ",")
+	for _, v := range is {
+		tmp := strings.TrimSpace(v)
+		if tmp == "" {
+			continue
+		}
+
+		num := int64(utf8.RuneCountInString(tmp))
+
+		if min > 0 {
+			if num < min {
+				return exist, []string{}, errors.New(desc + "最少" + strconv.FormatInt(min, 10) + "个字")
+			}
+		}
+
+		if num > max {
+			return exist, []string{}, errors.New(desc + "最多" + strconv.FormatInt(max, 10) + "个字")
+		}
+
+		if rc != nil {
+			b := rc.MatchString(tmp)
+			if !b {
+				return exist, []string{}, errors.New(desc + "无法通过规则校验" + tmp)
+			}
+		}
+
+		ret = append(ret, tmp)
+	}
+
+	return true, ret, nil
+}
+
+func (c *Context) ParamDataArrayInt(name string, desc string, require bool, min int64, max int64) (bool, []int64, error) {
+	exist, value, err := c.getParam(name)
+	if err != nil {
+		return false, []int64{}, errors.New("无法获取参数")
+	}
+
+	if require && !exist {
+		return false, []int64{}, errors.New(desc + "不能为空")
+	}
+
+	ret := make([]int64, 0)
+	is := strings.Split(value, ",")
+	for _, v := range is {
+		if v == "" {
+			continue
+		}
+
+		i, _ := strconv.ParseInt(strings.TrimSpace(v), 10, 64)
+
+		if i < min {
+			return exist, []int64{}, errors.New(desc + "不能小于" + strconv.FormatInt(min, 10))
+		}
+
+		if max > 0 {
+			if i > max {
+				return exist, []int64{}, errors.New(desc + "不能大于" + strconv.FormatInt(max, 10))
+			}
+		}
+
+		ret = append(ret, i)
+	}
+
+	return true, ret, nil
+}
+
 // ParamDataInt 检查参数并返回数字
-// name 参数名
-// desc 参数说明
-// require 是否必须有值
-// min 最小长度
-// max 最大长度
-// def 默认值
-// return exist是否存在参数
 func (c *Context) ParamDataInt(name string, desc string, require bool, min int64, max int64, def int64) (bool, int64, error) {
 	exist, value, err := c.getParam(name)
 	if err != nil {
@@ -211,13 +298,7 @@ func (c *Context) ParamDataInt(name string, desc string, require bool, min int64
 	if !exist {
 		tmp = def
 	} else {
-		temp := strings.TrimSpace(value)
-		/*reg := regexp.MustCompile(`^\d+$`)
-		if !reg.MatchString(temp) {
-			return false, 0, errors.New(desc + "格式不合法")
-		}*/
-
-		tmp, err = strconv.ParseInt(temp, 10, 64)
+		tmp, err = strconv.ParseInt(value, 10, 64)
 		if err != nil {
 			return false, 0, errors.New(desc + "格式不合法")
 		}
