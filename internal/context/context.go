@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"swagger/internal/cFunc"
 	"swagger/internal/log/bufWriter"
 	"swagger/internal/snowflake"
 	"time"
@@ -33,8 +34,9 @@ type Context struct {
 	MethodName string //最终调用的方法
 
 	//Post     url.Values //单纯的form-data请求数据 或者x-www-form-urlencoded请求数据
-	GetPost  url.Values //get参数与 form-data或者x-www-form-urlencoded合集
-	BodyData []byte     //body内包含的数据
+	GetPost  url.Values        //get参数与 form-data或者x-www-form-urlencoded合集
+	BodyData []byte            //body内包含的数据
+	JsonData map[string]string //post + application/json 的情况下，解析后的json数据 [仅限简单结构-请看使用文档]
 
 	ClientIp string //客户端IP
 
@@ -70,6 +72,8 @@ func NewContext(w http.ResponseWriter, r *http.Request, structName string, final
 const (
 	CheckInt int = iota
 	CheckString
+	CheckArrayInt
+	CheckArrayString
 )
 
 // CheckField 待检测字段及规则
@@ -84,6 +88,71 @@ type CheckField struct {
 	Reg       string //正则规则校验
 }
 
+func (c *Context) anyToInt64(a any) int64 {
+	if a == nil {
+		return 0
+	}
+
+	switch a.(type) {
+	case int:
+		return int64(a.(int))
+	case int8:
+		return int64(a.(int8))
+	case int16:
+		return int64(a.(int16))
+	case int32:
+		return int64(a.(int32))
+	case int64:
+		return a.(int64)
+	case float32:
+		return int64(a.(float32))
+	case float64:
+		return int64(a.(float64))
+	case bool:
+		if a.(bool) {
+			return 1
+		} else {
+			return 0
+		}
+	case string:
+		i, _ := strconv.ParseInt(a.(string), 10, 64)
+		return i
+	}
+
+	return 0
+}
+
+func (c *Context) anyToString(a any) string {
+	if a == nil {
+		return ""
+	}
+
+	switch a.(type) {
+	case int:
+		return strconv.Itoa(a.(int))
+	case int8:
+		return strconv.Itoa(int(a.(int8)))
+	case int16:
+		return strconv.Itoa(int(a.(int16)))
+	case int32:
+		return strconv.Itoa(int(a.(int32)))
+	case int64:
+		return strconv.FormatInt(a.(int64), 10)
+	case string:
+		return a.(string)
+	case []byte:
+		return string(a.([]byte))
+	case bool:
+		if a.(bool) {
+			return "1"
+		} else {
+			return "0"
+		}
+	}
+
+	return ""
+}
+
 func (c *Context) CheckField(fields []*CheckField) (map[string]any, error) {
 	if len(fields) == 0 {
 		return nil, nil
@@ -96,15 +165,9 @@ func (c *Context) CheckField(fields []*CheckField) (map[string]any, error) {
 	for _, v := range fields {
 		switch v.CheckType {
 		case CheckInt:
-			if v.Def == nil {
-				v.Def = int64(0)
-			}
-			_, value, err = c.ParamDataInt(v.Name, v.Desc, v.Request, v.Min, v.Max, v.Def.(int64))
+			_, value, err = c.ParamDataInt(v.Name, v.Desc, v.Request, v.Min, v.Max, c.anyToInt64(v.Def))
 		case CheckString:
-			if v.Def == nil {
-				v.Def = ""
-			}
-			_, value, err = c.ParamDataString(v.Name, v.Desc, v.Request, v.Min, v.Max, v.Def.(string))
+			_, value, err = c.ParamDataString(v.Name, v.Desc, v.Request, v.Min, v.Max, c.anyToString(v.Def))
 			//校验正则规则
 			if v.Reg != "" {
 				b, err := regexp.MatchString(v.Reg, value.(string))
@@ -135,9 +198,9 @@ func (c *Context) CheckField(fields []*CheckField) (map[string]any, error) {
 // def 默认值
 // return exist是否存在参数
 func (c *Context) ParamDataInt(name string, desc string, require bool, min int64, max int64, def int64) (bool, int64, error) {
-	exist := true
-	if c.GetPost[name] == nil {
-		exist = false
+	exist, value, err := c.getParam(name)
+	if err != nil {
+		return false, 0, errors.New("无法获取参数")
 	}
 
 	if require && !exist {
@@ -145,11 +208,10 @@ func (c *Context) ParamDataInt(name string, desc string, require bool, min int64
 	}
 
 	var tmp int64
-	var err error
 	if !exist {
 		tmp = def
 	} else {
-		temp := strings.TrimSpace(c.GetPost[name][0])
+		temp := strings.TrimSpace(value)
 		/*reg := regexp.MustCompile(`^\d+$`)
 		if !reg.MatchString(temp) {
 			return false, 0, errors.New(desc + "格式不合法")
@@ -175,6 +237,32 @@ func (c *Context) ParamDataInt(name string, desc string, require bool, min int64
 	return exist, tmp, nil
 }
 
+// 获取参数的值
+// name 参数名
+// 当请求方式为json时，懒解析json数据
+func (c *Context) getParam(name string) (exist bool, value string, err error) {
+	// post请求并且为json格式
+	if c.Request.Method == "POST" && c.Request.Header.Get("Content-Type") == "application/json" {
+		if len(c.JsonData) == 0 {
+			c.JsonData, err = cFunc.ParseSimpleJson(string(c.BodyData))
+			if err != nil {
+				return false, "", err
+			}
+		}
+
+		value, ok := c.JsonData[name]
+		if ok {
+			return true, value, nil
+		}
+	}
+
+	if c.GetPost[name] == nil {
+		return false, "", nil
+	}
+
+	return true, strings.TrimSpace(c.GetPost[name][0]), nil
+}
+
 // ParamDataString 检查参数并返回字符串值
 // name 参数名
 // desc 参数说明
@@ -184,28 +272,24 @@ func (c *Context) ParamDataInt(name string, desc string, require bool, min int64
 // def 默认值
 // return exist是否存在参数
 func (c *Context) ParamDataString(name string, desc string, require bool, min int64, max int64, def string) (bool, string, error) {
-	exist := true
-	if c.GetPost[name] == nil {
-		exist = false
+	exist, tmp, err := c.getParam(name)
+	if err != nil {
+		return false, "", errors.New("无法获取参数")
 	}
 
 	if require && !exist {
 		return false, "", errors.New(desc + "不能为空")
 	}
 
-	var tmp string
 	if !exist {
 		tmp = def
-	} else {
-		tmp = c.GetPost[name][0]
 	}
-	tmp = strings.TrimSpace(tmp)
 
 	//获得字符长度
 	num := int64(utf8.RuneCountInString(tmp))
 
 	//判断长度
-	if num > 0 && min > 0 {
+	if min > 0 {
 		if num < min {
 			return exist, "", errors.New(desc + "最少" + strconv.FormatInt(min, 10) + "个字")
 		}
@@ -234,49 +318,6 @@ func (c *Context) AddRetError(err error) {
 
 	c.RetError = c.RetError + err.Error()
 }
-
-/*// End 返回请求结果 当前只考虑JSON
-func (c *Context) End() {
-	if c.CustomRet {
-		return
-	}
-
-	success := true
-	if c.RetError != "" && c.RetCode == 0 {
-		c.RetCode = 2000
-	}
-
-	if c.RetCode != 0 {
-		success = false
-	}
-
-	if c.RetData == nil {
-		c.RetData = struct{}{}
-	}
-
-	retData, _ := json.Marshal(struct {
-		Success      bool   `json:"success"`
-		ErrorMessage string `json:"errorMessage"`
-		ErrorCode    string `json:"errorCode"`
-		Data         any    `json:"data"`
-		ShowType     int    `json:"showType"`
-		TraceId      string `json:"traceId"`
-		Host         string `json:"host"`
-	}{
-		Success:      success,
-		ErrorMessage: c.RetError,
-		ErrorCode:    strconv.Itoa(c.RetCode),
-		Data:         c.RetData,
-		ShowType:     0,
-		TraceId:      c.RequestId,
-		Host:         c.ClientIp,
-	})
-
-	c.ResponseWriter.Header().Set("Content-Type", "application/json;charset=UTF-8")
-	c.ResponseWriter.Write(retData)
-
-	c.Request.Context().Done()
-}*/
 
 // WebSocket 升级请求为websocket
 func (c *Context) WebSocket() (*websocket.Conn, error) {

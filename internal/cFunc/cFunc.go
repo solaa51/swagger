@@ -663,3 +663,62 @@ func sup(i int64, n int) string {
 	}
 	return m
 }
+
+// ParseSimpleJson 解析简单json数据为map[string]string结构
+// 参考格式：{"a":"b","c":123,"d":[1,2,3],"e":["h","i","j"]}
+func ParseSimpleJson(jsonStr string) (map[string]string, error) {
+	if jsonStr[0] != '{' || jsonStr[len(jsonStr)-1] != '}' {
+		return nil, errors.New("json格式错误")
+	}
+
+	a1 := jsonStr[1 : len(jsonStr)-1]
+
+	newStr := ""
+	subStr := make([]string, 0)
+	index := 0
+	tagL := -1
+	final := 0
+	for k, v := range a1 {
+		if v == '[' {
+			tagL = k
+		}
+
+		if v == ']' {
+			if tagL == -1 {
+				return nil, errors.New("json格式错误")
+			}
+
+			//解析出数据
+			aN := strings.ReplaceAll(a1[tagL+1:k], `"`, "")
+			subStr = append(subStr, aN)
+			newStr += a1[index:tagL] + "{{}}"
+
+			index = k + 1
+			final = k + 1
+			tagL = -1 //重置
+		}
+	}
+
+	newStr += a1[final:]
+
+	arr := make(map[string]string)
+
+	sl := strings.Split(newStr, ",")
+	rPIndex := 0
+	for _, v := range sl {
+		if v == "" {
+			continue
+		}
+		vv := strings.Split(v, ":")
+		key := strings.ReplaceAll(strings.TrimSpace(vv[0]), `"`, "")
+		val := strings.ReplaceAll(strings.TrimSpace(vv[1]), `"`, "")
+		if val == "{{}}" {
+			arr[key] = subStr[rPIndex]
+			rPIndex++
+		} else {
+			arr[key] = val
+		}
+	}
+
+	return arr, nil
+}
