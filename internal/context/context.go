@@ -169,7 +169,7 @@ func (c *Context) CheckField(fields []*CheckField) (map[string]any, error) {
 		case CheckString:
 			_, value, err = c.ParamDataString(v.Name, v.Desc, v.Request, v.Min, v.Max, c.anyToString(v.Def))
 			//校验正则规则
-			if v.Reg != "" {
+			if v.Reg != "" && value != "" {
 				b, err := regexp.MatchString(v.Reg, value.(string))
 				if !b || err != nil {
 					err = errors.New(v.Desc + "无法通过规则校验")
