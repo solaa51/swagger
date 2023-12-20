@@ -370,7 +370,7 @@ func (c *Context) ParamDataString(name string, desc string, require bool, min in
 	num := int64(utf8.RuneCountInString(tmp))
 
 	//判断长度
-	if min > 0 {
+	if num > 0 && min > 0 {
 		if num < min {
 			return exist, "", errors.New(desc + "最少" + strconv.FormatInt(min, 10) + "个字")
 		}
