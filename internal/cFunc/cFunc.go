@@ -709,7 +709,7 @@ func ParseSimpleJson(jsonStr string) (map[string]string, error) {
 		if v == "" {
 			continue
 		}
-		vv := strings.Split(v, ":")
+		vv := strings.Split(v, `":`)
 		key := strings.TrimSpace(strings.ReplaceAll(strings.TrimSpace(vv[0]), `"`, ""))
 		val := strings.TrimSpace(strings.ReplaceAll(strings.TrimSpace(vv[1]), `"`, ""))
 		if val == "{{}}" {
