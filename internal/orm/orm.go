@@ -8,6 +8,7 @@ import (
 	mysql2 "github.com/go-sql-driver/mysql"
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/yaml.v3"
+	"gorm.io/driver/clickhouse"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -100,32 +101,51 @@ func init() {
 
 // 连接数据库
 func link(conf DbConf) (*gorm.DB, error) {
-	protocName := "tcp"
-	if conf.TunnelSSHPort != "" {
-		sshClient, err := getSshTunnel(conf)
-		if err != nil {
-			return nil, err
-		}
-
-		sshTunnelName := conf.TunnelSSHNetName
-		if sshTunnelName == "" {
-			sshTunnelName = conf.Name + "_ssh_tunnel"
-		}
-
-		// 注册ssh代理
-		mysql2.RegisterDialContext(sshTunnelName, (&ViaSshDialer{client: sshClient}).Dial)
-
-		protocName = sshTunnelName
+	var dialer gorm.Dialector
+	var logPrefix string
+	var slowTime int
+	if conf.SlowTime > 0 {
+		slowTime = 200
 	}
 
-	dsn := conf.User + ":" + conf.Pass + "@" + protocName + "(" + conf.Host + ":" + conf.Port + ")/" + conf.Name + "?charset=utf8"
+	switch conf.DBType {
+	case "clickhouse":
+		logPrefix = "clickhouse-"
 
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		dsn := "clickhouse://" + conf.User + ":" + conf.Pass + "@" + conf.Host + ":" + conf.Port + "/" + conf.Name + "?dial_timeout=200ms&max_execution_time=60"
+		dialer = clickhouse.Open(dsn)
+	case "mysql", "":
+		logPrefix = "mysql-"
+		protocName := "tcp"
+		if conf.TunnelSSHPort != "" {
+			sshClient, err := getSshTunnel(conf)
+			if err != nil {
+				return nil, err
+			}
+
+			sshTunnelName := conf.TunnelSSHNetName
+			if sshTunnelName == "" {
+				sshTunnelName = conf.Name + "_ssh_tunnel"
+			}
+
+			// 注册ssh代理
+			mysql2.RegisterDialContext(sshTunnelName, (&ViaSshDialer{client: sshClient}).Dial)
+
+			protocName = sshTunnelName
+		}
+
+		dsn := conf.User + ":" + conf.Pass + "@" + protocName + "(" + conf.Host + ":" + conf.Port + ")/" + conf.Name + "?charset=utf8"
+		dialer = mysql.Open(dsn)
+	default:
+		return nil, errors.New("数据库类型不支持:" + conf.DBType)
+	}
+
+	db, err := gorm.Open(dialer, &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true, //使用单表名
 		},
-		Logger: logger.New(newDbLogWriter(), logger.Config{
-			SlowThreshold: 200 * time.Millisecond,
+		Logger: logger.New(newDbLogWriter(logPrefix), logger.Config{
+			SlowThreshold: time.Duration(slowTime) * time.Millisecond,
 			Colorful:      false,
 			LogLevel:      levelStrToGorm(conf.LogLevel),
 		}),
@@ -133,6 +153,9 @@ func link(conf DbConf) (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	sqlDB, _ := db.DB()
+	sqlDB.SetConnMaxLifetime(time.Minute * 10)
 
 	return db, nil
 }
@@ -197,14 +220,17 @@ func connectDb() {
 
 // DbConf 数据库配置格式
 type DbConf struct {
-	UName    string `yaml:"uName"`    //唯一名称标识
-	Mark     string `yaml:"mark"`     //备注
-	Host     string `yaml:"host"`     //域名或ip
-	User     string `yaml:"user"`     //用户
-	Pass     string `yaml:"pass"`     //密码
-	Port     string `yaml:"port"`     //端口
-	Name     string `yaml:"name"`     //数据库名称
-	LogLevel string `yaml:"logLevel"` //日志级别 [silent error warn info]
+	DBType    string `yaml:"dbType"`    //数据库类型 默认mysql
+	UName     string `yaml:"uName"`     //唯一名称标识
+	Mark      string `yaml:"mark"`      //备注
+	Host      string `yaml:"host"`      //域名或ip
+	User      string `yaml:"user"`      //用户
+	Pass      string `yaml:"pass"`      //密码
+	Port      string `yaml:"port"`      //端口
+	Name      string `yaml:"name"`      //数据库名称
+	LogLevel  string `yaml:"logLevel"`  //日志级别 [silent error warn info]
+	SlowTime  int    `yaml:"slowTime"`  //慢日志记录时间 单位毫秒
+	LogPrefix string `yaml:"logPrefix"` //日志前缀 默认前缀为 "[dbType]-"
 
 	//ssh tunnel加密配置
 	TunnelSSHHost string `yaml:"tunnelSSHHost"`

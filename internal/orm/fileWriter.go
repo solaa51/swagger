@@ -7,9 +7,10 @@ import (
 	"swagger/internal/log/bufWriter"
 )
 
-func newDbLogWriter() *fileWriter {
+// prefix 数据库日志文件前缀
+func newDbLogWriter(prefix string) *fileWriter {
 	f := &fileWriter{
-		writer: bufWriter.NewBufWriter("gorm-", false, false),
+		writer: bufWriter.NewBufWriter(prefix, false, false),
 	}
 	return f
 }
