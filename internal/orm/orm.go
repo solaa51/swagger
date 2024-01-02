@@ -379,7 +379,7 @@ func TableToStruct(dbUName string, tableName string) {
 		//检查default
 		if v.IsNullable == "NO" && v.ColumnDefault != "" {
 			defaultInfo := "default:" + v.ColumnDefault
-			if v.Extra != "" {
+			if v.Extra != "" && v.Extra != "DEFAULT_GENERATED" {
 				defaultInfo += " " + v.Extra
 			}
 			g = append(g, defaultInfo)
