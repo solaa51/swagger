@@ -671,49 +671,68 @@ func ParseSimpleJson(jsonStr string) (map[string]string, error) {
 		return nil, errors.New("json格式错误")
 	}
 
-	a1 := jsonStr[1 : len(jsonStr)-1]
+	var iis [][2]int
+	keys := 0
 
-	newStr := ""
-	subStr := make([]string, 0)
-	index := 0
-	tagL := -1
-	final := 0
-	for k, v := range a1 {
-		if v == '[' {
-			tagL = k
+	//特殊 :" -- "  :[ -- ]
+	for k, v := range jsonStr {
+		if k == 0 {
+			continue
 		}
 
-		if v == ']' {
-			if tagL == -1 {
-				return nil, errors.New("json格式错误")
-			}
+		if v == '"' && jsonStr[k+1] == ':' {
+			keys++
+		}
 
-			//解析出数据
-			aN := strings.ReplaceAll(a1[tagL+1:k], `"`, "")
-			subStr = append(subStr, aN)
-			newStr += a1[index:tagL] + "{{}}"
+		if v == '"' && jsonStr[k-1] == ':' {
+			iis = append(iis, [2]int{
+				k, k + strings.Index(jsonStr[k+1:], `"`) + 1,
+			})
+		}
 
-			index = k + 1
-			final = k + 1
-			tagL = -1 //重置
+		if v == '[' {
+			iis = append(iis, [2]int{
+				k, k + strings.Index(jsonStr[k+1:], `]`) + 1,
+			})
 		}
 	}
 
-	newStr += a1[final:]
+	var snew bytes.Buffer
+	tiStrs := make([]string, len(iis))
+
+	if len(iis) == 0 {
+		snew.WriteString(jsonStr[1 : len(jsonStr)-1])
+	} else {
+		for k, v := range iis {
+			tiStrs[k] = jsonStr[v[0]+1 : v[1]]
+
+			if k == 0 {
+				snew.WriteString(jsonStr[1:v[0]] + "{{}}")
+			}
+
+			if k > 0 {
+				snew.WriteString(jsonStr[iis[k-1][1]+1:v[0]] + "{{}}")
+			}
+
+			if k == len(iis)-1 {
+				snew.WriteString(jsonStr[v[1]+1 : len(jsonStr)-1])
+			}
+		}
+	}
 
 	arr := make(map[string]string)
 
-	sl := strings.Split(newStr, ",")
+	sl := strings.Split(snew.String(), ",")
 	rPIndex := 0
 	for _, v := range sl {
 		if v == "" {
 			continue
 		}
-		vv := strings.Split(v, `":`)
+		vv := strings.Split(v, `:`)
 		key := strings.TrimSpace(strings.ReplaceAll(strings.TrimSpace(vv[0]), `"`, ""))
-		val := strings.TrimSpace(strings.ReplaceAll(strings.TrimSpace(vv[1]), `"`, ""))
+		val := strings.TrimSpace(vv[1])
 		if val == "{{}}" {
-			arr[key] = strings.TrimSpace(subStr[rPIndex])
+			arr[key] = strings.TrimSpace(strings.ReplaceAll(tiStrs[rPIndex], `"`, ""))
 			rPIndex++
 		} else {
 			arr[key] = val
