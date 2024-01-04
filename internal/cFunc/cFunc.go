@@ -698,6 +698,7 @@ func ParseSimpleJson(jsonStr string) (map[string]string, error) {
 	}
 
 	var snew bytes.Buffer
+	snew.Grow(len(jsonStr))
 	tiStrs := make([]string, len(iis))
 
 	if len(iis) == 0 {
