@@ -8,58 +8,35 @@ import (
 	"os"
 	"swagger/internal/appPath"
 	"swagger/internal/log/bufWriter"
+	"swagger/internal/watchConfig"
+	"sync"
 	"time"
 )
 
-var iClient *redis.Client
-
-// 前缀
-var keyPrefix string
-
-// Config redis配置文件结构
-type Config struct {
-	Host   string `yaml:"host"`
-	Port   string `yaml:"port"`
-	User   string `yaml:"user"`
-	Pass   string `yaml:"pass"`
-	DB     int    `yaml:"db"`
-	Prefix string `yaml:"prefix"`
+type Client struct {
+	*redis.Client
 }
 
-func init() {
-	cc := &Config{}
+// Get bool表示是否存在该key
+func (c *Client) Get(key string) (string, bool, error) {
+	val, err := c.Client.Get(context.Background(), key).Result()
 
-	f, err := os.ReadFile(appPath.ConfigDir() + "redis.yaml")
-	if err != nil {
-		bufWriter.Fatal("无法解析redis连接信息", err.Error())
+	if errors.Is(err, redis.Nil) {
+		return "", false, nil
+	} else if err != nil {
+		return "", false, err
 	}
 
-	err = yaml.Unmarshal(f, cc)
-	if err != nil {
-		bufWriter.Fatal("无法解析redis连接信息", err.Error())
-	}
-
-	iClient, err = NewClient(cc.Host, cc.Port, cc.User, cc.Pass, cc.DB)
-	if err != nil {
-		bufWriter.Fatal(err.Error())
-		return
-	}
-
-	keyPrefix = cc.Prefix
+	return val, true, nil
 }
 
-// Db 自定义调用请先使用该方法获取实例
-func Db() *redis.Client {
-	return iClient
+// Set 0-second表示为没有过期时间
+func (c *Client) Set(key string, value string, second int) error {
+	return c.Client.Set(context.Background(), key, value, time.Second*time.Duration(second)).Err()
 }
 
-// KeyPrefix 前缀配置
-func KeyPrefix() string {
-	return keyPrefix
-}
-
-func IsExists(key string) bool {
-	i, err := iClient.Exists(context.Background(), key).Result()
+func (c *Client) IsExists(key string) bool {
+	i, err := c.Client.Exists(context.Background(), key).Result()
 	if err != nil {
 		return false
 	}
@@ -72,49 +49,31 @@ func IsExists(key string) bool {
 }
 
 // HSet hash表 any可为slice[成对] map等类型 当second=0时无过期时间
-func HSet(key string, value any, second int) error {
-	err := iClient.HSet(context.Background(), key, value).Err()
+func (c *Client) HSet(key string, value any, second int) error {
+	err := c.Client.HSet(context.Background(), key, value).Err()
 	if err != nil {
 		return err
 	}
 
 	if second > 0 {
-		iClient.Expire(context.Background(), key, time.Second*time.Duration(second))
+		c.Client.Expire(context.Background(), key, time.Second*time.Duration(second))
 	}
 
 	return nil
 }
 
 // HGetAll 获取hash列表中的所有键值对
-func HGetAll(key string) (map[string]string, error) {
-	return iClient.HGetAll(context.Background(), key).Result()
+func (c *Client) HGetAll(key string) (map[string]string, error) {
+	return c.Client.HGetAll(context.Background(), key).Result()
 }
 
-func HGetFieldValue(key string, field string) (string, error) {
-	return iClient.HGet(context.Background(), key, field).Result()
-}
-
-// Set 0-second表示为没有过期时间
-func Set(key string, value string, second int) error {
-	return iClient.Set(context.Background(), key, value, time.Second*time.Duration(second)).Err()
-}
-
-// Get bool表示是否存在该key
-func Get(key string) (string, bool, error) {
-	val, err := iClient.Get(context.Background(), key).Result()
-
-	if errors.Is(err, redis.Nil) {
-		return "", false, nil
-	} else if err != nil {
-		return "", false, err
-	}
-
-	return val, true, nil
+func (c *Client) HGetFieldValue(key string, field string) (string, error) {
+	return c.Client.HGet(context.Background(), key, field).Result()
 }
 
 // TTL 获取剩余时间
-func TTL(key string) (float64, error) {
-	val, err := iClient.TTL(context.Background(), key).Result()
+func (c *Client) TTL(key string) (float64, error) {
+	val, err := c.Client.TTL(context.Background(), key).Result()
 	if err != nil {
 		return 0, err
 	}
@@ -122,20 +81,129 @@ func TTL(key string) (float64, error) {
 	return val.Seconds(), nil
 }
 
+func (c *Client) Expire(key string, second int) {
+	c.Client.Expire(context.Background(), key, time.Second*time.Duration(second))
+}
+
+func (c *Client) Del(key string) error {
+	if c.Client == nil {
+		return errors.New("无效的redis连接")
+	}
+
+	return c.Client.Del(context.Background(), key).Err()
+}
+
+var defaultClient *Client
+var Conf *Config     //redis配置信息
+var keyPrefix string //前缀
+var wg sync.Mutex
+
+// Config redis配置文件结构
+type Config struct {
+	Host   string `yaml:"host"`
+	Port   string `yaml:"port"`
+	User   string `yaml:"user"`
+	Pass   string `yaml:"pass"`
+	DB     int    `yaml:"db"`
+	Prefix string `yaml:"prefix"`
+}
+
+func newConfig() (*Config, error) {
+	f, err := os.ReadFile(appPath.ConfigDir() + "redis.yaml")
+	if err != nil {
+		return nil, errors.New("无法读取redis配置文件")
+	}
+
+	Conf = &Config{}
+	err = yaml.Unmarshal(f, Conf)
+	if err != nil {
+		return nil, errors.New("无法解析redis连接信息:" + err.Error())
+	}
+
+	return Conf, nil
+}
+
+func init() {
+	Conf, err := newConfig()
+	if err != nil {
+		bufWriter.Fatal(err.Error())
+	}
+	keyPrefix = Conf.Prefix
+
+	defaultClient, err = NewClient(Conf.Host, Conf.Port, Conf.User, Conf.Pass, Conf.DB)
+	if err != nil {
+		bufWriter.Fatal(err.Error())
+	}
+
+	ch, _ := watchConfig.AddWatch(appPath.ConfigDir() + "redis.yaml")
+	go func() {
+		for {
+			select {
+			case <-ch:
+				bufWriter.Info(appPath.ConfigDir()+"redis.yaml", "文件变更触发更新")
+				cc, err := newConfig()
+				if err == nil {
+					wg.Lock()
+					upClient, err := NewClient(Conf.Host, Conf.Port, Conf.User, Conf.Pass, Conf.DB)
+					if err == nil {
+						defaultClient = upClient
+						Conf = cc
+						keyPrefix = cc.Prefix
+					} else {
+						bufWriter.Error("redis配置变更触发更新失败：", err.Error())
+					}
+					wg.Unlock()
+				} else {
+					bufWriter.Error("redis配置变更触发更新失败：", err.Error())
+				}
+			}
+		}
+	}()
+}
+
+// KeyPrefix 前缀配置
+func KeyPrefix() string {
+	return keyPrefix
+}
+
+func IsExists(key string) bool {
+	return defaultClient.IsExists(key)
+}
+
+func HSet(key string, value any, second int) error {
+	return defaultClient.HSet(key, value, second)
+}
+
+func HGetAll(key string) (map[string]string, error) {
+	return defaultClient.HGetAll(key)
+}
+
+func HGetFieldValue(key string, field string) (string, error) {
+	return defaultClient.HGetFieldValue(key, field)
+}
+
+func Set(key string, value string, second int) error {
+	return defaultClient.Set(key, value, second)
+}
+
+func Get(key string) (string, bool, error) {
+	return defaultClient.Get(key)
+}
+
+func TTL(key string) (float64, error) {
+	return defaultClient.TTL(key)
+}
+
 func Expire(key string, second int) {
-	iClient.Expire(context.Background(), key, time.Second*time.Duration(second))
+	defaultClient.Expire(key, second)
 }
 
 // Del 删除
 func Del(key string) error {
-	if iClient == nil {
-		return errors.New("无效的redis连接")
-	}
-
-	return iClient.Del(context.Background(), key).Err()
+	return defaultClient.Del(key)
 }
 
-func NewClient(host, port, name, pass string, db int) (*redis.Client, error) {
+func NewClient(host, port, name, pass string, db int) (*Client, error) {
 	cc := redis.NewClient(&redis.Options{
 		Addr:     host + ":" + port,
 		Username: name,
@@ -152,5 +220,7 @@ func NewClient(host, port, name, pass string, db int) (*redis.Client, error) {
 		return nil, errors.New("连接redis失败:" + err.Error())
 	}
 
-	return cc, nil
+	cC := &Client{cc}
+
+	return cC, nil
 }
