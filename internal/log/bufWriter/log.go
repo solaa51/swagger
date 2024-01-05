@@ -9,25 +9,15 @@ import (
 	"time"
 )
 
-// 可暴露 1. 前缀  2. 缓冲区的启用 动态修改
-// 可操作 3 日志级别
-// 可操作 env改变 修改存储路径 可直接读取env多判断一次 写入到每个级别上
-// 日志需要优先于config等的加载
-
-// 默认日志处理为直接写入文件，当env==local时，日志会打印在终端
-// 所有检查全部通过后，再调用打开缓冲区
-var dl *defaultLog
-
-type defaultLog struct {
+// SwaLog 日志处理器
+type SwaLog struct {
 	writer *BufWriter
 	logger *slog.Logger   // 日志记录器
 	level  *slog.LevelVar // 日志级别
-	//buffer bool           // 是否启用缓冲区写入日志
-	prefix string // 日志文件前缀
 }
 
-// SetDefaultLevel 动态修改默认日志级别
-func SetDefaultLevel(env string) {
+// SetLevel 修改日志级别
+func (s *SwaLog) SetLevel(env string) {
 	var level slog.Level
 	switch env {
 	case "test":
@@ -40,52 +30,120 @@ func SetDefaultLevel(env string) {
 		level = slog.LevelInfo
 	}
 
-	dl.level.Set(level)
+	s.level.Set(level)
+}
+
+// SetBuffer 动态修改buffer缓冲区开关
+func (s *SwaLog) SetBuffer(buffer bool) {
+	s.writer.buffer = buffer
+}
+
+// SetStdout 修改终端是否输出日志
+func (s *SwaLog) SetStdout(stdout bool) {
+	s.writer.stdout = stdout
+}
+
+// Close 回收资源
+func (s *SwaLog) Close() {
+	s.writer.Close()
+}
+
+func (s *SwaLog) Info(msg string, args ...any) {
+	if len(args) > 0 {
+		s.logger.Info(msg + fmt.Sprint(args...))
+	} else {
+		s.logger.Info(msg)
+	}
+}
+
+func (s *SwaLog) Error(msg string, args ...any) {
+	if len(args) > 0 {
+		s.logger.Error(msg+fmt.Sprint(args...), slog.Any("source", caller()))
+	} else {
+		s.logger.Error(msg, slog.Any("source", caller()))
+	}
+}
+
+func (s *SwaLog) Warn(msg string, args ...any) {
+	if len(args) > 0 {
+		s.logger.Warn(msg + fmt.Sprint(args...))
+	} else {
+		s.logger.Warn(msg)
+	}
+}
+
+func (s *SwaLog) Fatal(msg string, args ...any) {
+	s.SetBuffer(false)
+	s.Error(msg, args)
+	os.Exit(1)
+}
+
+func NewSwaLog(prefix string, buffer bool, stdout bool) *SwaLog {
+	ll := &SwaLog{
+		level: &slog.LevelVar{},
+	}
+	ll.level.Set(slog.LevelInfo)
+
+	options := &slog.HandlerOptions{
+		Level: ll.level,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.SourceKey {
+				source := a.Value.Any().(*slog.Source)
+				source.File = filepath.Base(source.File)
+			}
+
+			if a.Key == slog.TimeKey {
+				return slog.String(a.Key, a.Value.Time().Format(time.DateTime+".000000"))
+			}
+
+			return a
+		},
+	}
+
+	w := NewBufWriter(prefix, buffer, stdout)
+	ll.writer = w
+
+	ll.logger = slog.New(slog.NewJSONHandler(w, options))
+
+	return ll
+}
+
+var defaultLog *SwaLog
+
+// SetDefaultLevel 动态修改默认日志级别
+func SetDefaultLevel(env string) {
+	defaultLog.SetLevel(env)
 }
 
 // SetDefaultStdout 修改终端是否输出日志
 func SetDefaultStdout(stdout bool) {
-	dl.writer.stdout = stdout
+	defaultLog.SetStdout(stdout)
 }
 
 // SetDefaultBuffer 动态修改buffer缓冲写入
 func SetDefaultBuffer(buffer bool) {
-	dl.writer.buffer = buffer
+	defaultLog.SetBuffer(buffer)
 }
 
 // CloseDefault 回收资源
 func CloseDefault() {
-	dl.writer.Close()
+	defaultLog.Close()
 }
 
 func Info(msg string, args ...any) {
-	if len(args) > 0 {
-		dl.logger.Info(msg + fmt.Sprint(args...))
-	} else {
-		dl.logger.Info(msg)
-	}
+	defaultLog.Info(msg, args)
 }
 
 func Error(msg string, args ...any) {
-	if len(args) > 0 {
-		dl.logger.Error(msg+fmt.Sprint(args...), slog.Any("source", caller()))
-	} else {
-		dl.logger.Error(msg, slog.Any("source", caller()))
-	}
+	defaultLog.Error(msg, args)
 }
 
 func Warn(msg string, args ...any) {
-	if len(args) > 0 {
-		dl.logger.Warn(msg + fmt.Sprint(args...))
-	} else {
-		dl.logger.Warn(msg)
-	}
+	defaultLog.Warn(msg, args)
 }
 
 func Fatal(msg string, args ...any) {
-	Error(msg, args)
-
-	os.Exit(1)
+	defaultLog.Fatal(msg, args)
 }
 
 func caller() *slog.Source {
@@ -117,31 +175,5 @@ func caller() *slog.Source {
 }
 
 func init() {
-	dl = &defaultLog{
-		level:  &slog.LevelVar{},
-		prefix: "log-",
-	}
-	dl.level.Set(slog.LevelInfo)
-
-	options := &slog.HandlerOptions{
-		AddSource: false, //标识打印日志的来源文件信息 可自定义实现该功能 错误以上的加上调用位置即可
-		Level:     dl.level,
-		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-			if a.Key == slog.SourceKey {
-				source := a.Value.Any().(*slog.Source)
-				source.File = filepath.Base(source.File)
-			}
-
-			if a.Key == slog.TimeKey {
-				return slog.String(a.Key, a.Value.Time().Format(time.DateTime+".000000"))
-			}
-
-			return a
-		},
-	}
-
-	w := NewBufWriter(dl.prefix, false, true)
-	dl.writer = w
-
-	dl.logger = slog.New(slog.NewJSONHandler(w, options))
+	defaultLog = NewSwaLog("log-", false, true)
 }
