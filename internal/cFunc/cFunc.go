@@ -690,7 +690,7 @@ func ParseSimpleJson(jsonStr string) (map[string]string, error) {
 			})
 		}
 
-		if v == '[' {
+		if v == '[' && jsonStr[k-1] == ':' {
 			iis = append(iis, [2]int{
 				k, k + strings.Index(jsonStr[k+1:], `]`) + 1,
 			})
