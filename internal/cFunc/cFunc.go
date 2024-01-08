@@ -366,6 +366,8 @@ func Date(fmt string, unix int64) string {
 
 	if unix == 0 {
 		return time.Now().In(curZone).Format(newFormat)
+	} else if unix == -1 {
+		return time.Unix(0, 0).In(curZone).Format(newFormat)
 	} else {
 		return time.Unix(unix, 0).In(curZone).Format(newFormat)
 	}
