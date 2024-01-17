@@ -6,7 +6,7 @@ require (
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/gorilla/websocket v1.5.1
 	github.com/pkg/sftp v1.13.6
-	github.com/redis/go-redis/v9 v9.3.0
+	github.com/redis/go-redis/v9 v9.4.0
 	github.com/xuri/excelize/v2 v2.8.0
 	golang.org/x/crypto v0.18.0
 	golang.org/x/net v0.19.0
