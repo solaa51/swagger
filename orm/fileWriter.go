@@ -2,9 +2,9 @@ package orm
 
 import (
 	"fmt"
+	"github.com/solaa51/swagger/cFunc"
+	"github.com/solaa51/swagger/log/bufWriter"
 	"strings"
-	"swagger/internal/cFunc"
-	"swagger/internal/log/bufWriter"
 )
 
 // prefix 数据库日志文件前缀

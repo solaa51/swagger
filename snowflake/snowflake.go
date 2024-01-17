@@ -2,8 +2,8 @@ package snowflake
 
 import (
 	"errors"
+	"github.com/solaa51/swagger/appConfig"
 	"strconv"
-	"swagger/internal/appConfig"
 	"sync"
 	"time"
 )

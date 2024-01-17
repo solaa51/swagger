@@ -1,7 +1,7 @@
 package limiter
 
 import (
-	"swagger/internal/appConfig"
+	"github.com/solaa51/swagger/appConfig"
 	"sync"
 	"time"
 )

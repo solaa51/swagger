@@ -1,9 +1,9 @@
 package watchConfig
 
 import (
+	"github.com/solaa51/swagger/cFunc"
+	"github.com/solaa51/swagger/log/bufWriter"
 	"os"
-	"swagger/internal/cFunc"
-	"swagger/internal/log/bufWriter"
 	"time"
 )
 

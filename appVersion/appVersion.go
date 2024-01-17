@@ -1,8 +1,8 @@
 package appVersion
 
 import (
+	"github.com/solaa51/swagger/log/bufWriter"
 	"log/slog"
-	"swagger/internal/log/bufWriter"
 )
 
 // 用来设置版本信息

@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/solaa51/swagger/appPath"
 	"github.com/xuri/excelize/v2"
 	"golang.org/x/net/http2"
 	"golang.org/x/sync/singleflight"
@@ -30,7 +31,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"swagger/internal/appPath"
 	"time"
 )
 

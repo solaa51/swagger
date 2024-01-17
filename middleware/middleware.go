@@ -1,8 +1,8 @@
 package middleware
 
 import (
+	"github.com/solaa51/swagger/context"
 	"net/http"
-	"swagger/internal/context"
 )
 
 // Middleware 路由校验完毕后的中间件处理

@@ -2,8 +2,8 @@ package handle
 
 import (
 	"encoding/json"
+	"github.com/solaa51/swagger/context"
 	"net/http"
-	"swagger/internal/context"
 )
 
 type defaultHttpReturn struct {

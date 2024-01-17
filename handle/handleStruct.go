@@ -2,11 +2,11 @@ package handle
 
 import (
 	"errors"
+	"github.com/solaa51/swagger/context"
+	"github.com/solaa51/swagger/control"
+	"github.com/solaa51/swagger/log/bufWriter"
 	"reflect"
 	"strconv"
-	"swagger/internal/context"
-	"swagger/internal/control"
-	"swagger/internal/log/bufWriter"
 )
 
 // 自定义struct

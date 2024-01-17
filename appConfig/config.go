@@ -1,13 +1,13 @@
 package appConfig
 
 import (
+	"github.com/solaa51/swagger/appPath"
+	"github.com/solaa51/swagger/cFunc"
+	"github.com/solaa51/swagger/log/bufWriter"
+	"github.com/solaa51/swagger/watchConfig"
 	"gopkg.in/yaml.v3"
 	"os"
 	"strings"
-	"swagger/internal/appPath"
-	"swagger/internal/cFunc"
-	"swagger/internal/log/bufWriter"
-	"swagger/internal/watchConfig"
 )
 
 /**

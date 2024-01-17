@@ -3,11 +3,11 @@ package bufWriter
 import (
 	"bufio"
 	"fmt"
+	"github.com/solaa51/swagger/appPath"
+	"github.com/solaa51/swagger/cFunc"
 	"log"
 	"os"
 	"strings"
-	"swagger/internal/appPath"
-	"swagger/internal/cFunc"
 	"sync"
 	"time"
 )
