@@ -1,7 +1,7 @@
 package router
 
 import (
-	"goSid/internal/middleware"
+	"github.com/solaa51/swagger/middleware"
 	"regexp"
 	"strconv"
 	"strings"

@@ -17,7 +17,7 @@ http返回信息剥离-默认处理格式
 
 AddHandleStruct() 新增对外的绑定关系，自动获取struct对外的方法生成映射关系
 
-默认使用structName[首字母小写] 方法第一个参数必须为goSid/internal/context *context.Context类型
+默认使用structName[首字母小写] 方法第一个参数必须为github.com/solaa51/swagger/context *context.Context类型
 
 > handle 绑定方法调用 绑定的就是函数的调用地址
 >
