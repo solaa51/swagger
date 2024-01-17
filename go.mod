@@ -1,4 +1,4 @@
-module swagger
+module github.com/solaa51/swagger
 
 go 1.21.5
 
