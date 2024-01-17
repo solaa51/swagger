@@ -8,7 +8,7 @@ require (
 	github.com/pkg/sftp v1.13.6
 	github.com/redis/go-redis/v9 v9.3.0
 	github.com/xuri/excelize/v2 v2.8.0
-	golang.org/x/crypto v0.16.0
+	golang.org/x/crypto v0.18.0
 	golang.org/x/net v0.19.0
 	golang.org/x/sync v0.5.0
 	golang.org/x/text v0.14.0
@@ -45,5 +45,5 @@ require (
 	github.com/xuri/nfp v0.0.0-20230819163627-dc951e3ffe1a // indirect
 	go.opentelemetry.io/otel v1.19.0 // indirect
 	go.opentelemetry.io/otel/trace v1.19.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/sys v0.16.0 // indirect
 )
