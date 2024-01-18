@@ -358,7 +358,7 @@ func (c *Context) ParamDataString(name string, desc string, require bool, min in
 		return false, "", errors.New("无法获取参数")
 	}
 
-	if require && !exist {
+	if require && (!exist || tmp == "") {
 		return false, "", errors.New(desc + "不能为空")
 	}
 
