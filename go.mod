@@ -5,6 +5,7 @@ go 1.21.5
 require (
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/gorilla/websocket v1.5.1
+	github.com/nats-io/nats.go v1.32.0
 	github.com/pkg/sftp v1.13.6
 	github.com/redis/go-redis/v9 v9.4.0
 	github.com/xuri/excelize/v2 v2.8.0
@@ -31,9 +32,11 @@ require (
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/klauspost/compress v1.16.7 // indirect
+	github.com/klauspost/compress v1.17.2 // indirect
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
+	github.com/nats-io/nkeys v0.4.7 // indirect
+	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/paulmach/orb v0.10.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.18 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
