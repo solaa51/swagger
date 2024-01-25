@@ -8,7 +8,6 @@ import (
 	"github.com/solaa51/swagger/log/bufWriter"
 	"github.com/solaa51/swagger/snowflake"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -429,20 +428,5 @@ func (c *Context) parseParam() {
 
 // 解析请求客户端IP
 func (c *Context) clientIp() string {
-	xForwardedFor := c.Request.Header.Get("X-Forwarded-For")
-	ip := strings.TrimSpace(strings.Split(xForwardedFor, ",")[0])
-	if ip != "" {
-		return ip
-	}
-
-	ip = strings.TrimSpace(c.Request.Header.Get("X-Real-Ip"))
-	if ip != "" {
-		return ip
-	}
-
-	if ip, _, err := net.SplitHostPort(strings.TrimSpace(c.Request.RemoteAddr)); err == nil {
-		return ip
-	}
-
-	return ""
+	return cFunc.ClientIP(c.Request)
 }
