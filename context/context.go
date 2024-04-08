@@ -13,9 +13,20 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 )
+
+var CtxPool *sync.Pool
+
+func init() {
+	CtxPool = &sync.Pool{
+		New: func() any {
+			return new(Context)
+		},
+	}
+}
 
 // Context 处理请求上下文
 type Context struct {
@@ -24,9 +35,6 @@ type Context struct {
 	Request        *http.Request
 	StartTime      time.Time //记录请求开始处理时间
 
-	Path   string
-	Method string
-
 	RequestId string
 
 	StructName string //最终调用的struct name
@@ -34,7 +42,7 @@ type Context struct {
 
 	//Post     url.Values //单纯的form-data请求数据 或者x-www-form-urlencoded请求数据
 	GetPost  url.Values        //get参数与 form-data或者x-www-form-urlencoded合集
-	BodyData []byte            //body内包含的数据
+	BodyData *[]byte           //body内包含的数据
 	JsonData map[string]string //post + application/json 的情况下，解析后的json数据 [仅限简单结构-请看使用文档]
 
 	ClientIp string //客户端IP
@@ -47,17 +55,35 @@ type Context struct {
 }
 
 func NewContext(w http.ResponseWriter, r *http.Request, structName string, finalStructName string, methodName string) *Context {
-	ctx := &Context{
-		Ctx:            context.Background(),
-		ResponseWriter: w,
-		Request:        r,
-		StartTime:      time.Now(),
-		RequestId:      snowflake.ID(),
-		Method:         r.Method,
-		Path:           r.URL.Path,
-		StructName:     finalStructName,
-		MethodName:     methodName,
-	}
+	ctx := CtxPool.Get().(*Context)
+	ctx.Ctx = context.Background()
+	ctx.ResponseWriter = w
+	ctx.Request = r
+	ctx.StartTime = time.Now()
+	ctx.RequestId = snowflake.ID()
+	ctx.StructName = finalStructName
+	ctx.MethodName = methodName
+	//ctx.GetPost = nil
+	ctx.BodyData = nil
+	ctx.JsonData = make(map[string]string)
+	ctx.CustomRet = false
+	ctx.RetError = ""
+	ctx.RetCode = 0
+	ctx.RetData = nil
+
+	//fmt.Println("pool中获取", ctx.RequestId, ctx.Request.URL.Path)
+
+	//ctx := &Context{
+	//	Ctx:            context.Background(),
+	//	ResponseWriter: w,
+	//	Request:        r,
+	//	StartTime:      time.Now(),
+	//	RequestId:      snowflake.ID(),
+	//	Method:         r.Method,
+	//	Path:           r.URL.Path,
+	//	StructName:     finalStructName,
+	//	MethodName:     methodName,
+	//}
 	//fmt.Println("remoteAddr", r.RemoteAddr)
 
 	//解析参数
@@ -324,7 +350,7 @@ func (c *Context) getParam(name string) (exist bool, value string, err error) {
 	// post请求并且为json格式
 	if c.Request.Method == "POST" && c.Request.Header.Get("Content-Type") == "application/json" {
 		if len(c.JsonData) == 0 {
-			c.JsonData, err = cFunc.ParseSimpleJson(string(c.BodyData))
+			c.JsonData, err = cFunc.ParseSimpleJson(c.BodyData)
 			if err != nil {
 				return false, "", err
 			}
@@ -416,12 +442,14 @@ func (c *Context) parseParam() {
 	_ = c.Request.ParseMultipartForm(32 << 20)
 
 	// 获取body内容
-	body, err := io.ReadAll(c.Request.Body)
-	if err != nil {
-		bufWriter.Error("读取请求body失败", err, c.Request.URL.String())
+	if c.Request.Method == "POST" || c.Request.Method == "PUT" || c.Request.Method == "PATCH" {
+		body, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			bufWriter.Error("读取请求body失败", err, c.Request.URL.String())
+		}
+		c.BodyData = &body
+		defer c.Request.Body.Close()
 	}
-	c.BodyData = body
-	defer c.Request.Body.Close()
 
 	c.GetPost = c.Request.Form
 }

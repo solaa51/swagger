@@ -2,6 +2,7 @@ package orm
 
 import (
 	"fmt"
+	"github.com/solaa51/swagger/app"
 	"github.com/solaa51/swagger/cFunc"
 	"github.com/solaa51/swagger/log/bufWriter"
 	"strings"
@@ -12,6 +13,9 @@ func newDbLogWriter(prefix string) *fileWriter {
 	f := &fileWriter{
 		writer: bufWriter.NewBufWriter(prefix, false, false),
 	}
+
+	app.RegistClose(f.writer.Close)
+
 	return f
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/redis/go-redis/v9"
+	"github.com/solaa51/swagger/app"
 	"github.com/solaa51/swagger/appPath"
 	"github.com/solaa51/swagger/log/bufWriter"
 	"github.com/solaa51/swagger/watchConfig"
@@ -62,6 +63,20 @@ func (c *Client) HSet(key string, value any, second int) error {
 	return nil
 }
 
+// HSetNX hash表增加一个键值对
+func (c *Client) HSetNX(key string, field string, value any) error {
+	return c.Client.HSetNX(context.Background(), key, field, value).Err()
+}
+
+// HIncrBy hash表字段值 增减
+func (c *Client) HIncrBy(key string, field string, incr int64) (int64, error) {
+	return c.Client.HIncrBy(context.Background(), key, field, incr).Result()
+}
+
+func (c *Client) HDel(key string, field string) (int64, error) {
+	return c.Client.HDel(context.Background(), key, field).Result()
+}
+
 // HGetAll 获取hash列表中的所有键值对
 func (c *Client) HGetAll(key string) (map[string]string, error) {
 	return c.Client.HGetAll(context.Background(), key).Result()
@@ -91,6 +106,14 @@ func (c *Client) Del(key string) error {
 	}
 
 	return c.Client.Del(context.Background(), key).Err()
+}
+
+func (c *Client) Close() {
+	if c.Client == nil {
+		return
+	}
+
+	_ = c.Client.Close()
 }
 
 var defaultClient *Client
@@ -159,6 +182,8 @@ func init() {
 			}
 		}
 	}()
+
+	app.RegistClose(defaultClient.Close)
 }
 
 // KeyPrefix 前缀配置
@@ -172,6 +197,18 @@ func IsExists(key string) bool {
 
 func HSet(key string, value any, second int) error {
 	return defaultClient.HSet(key, value, second)
+}
+
+func HSetNX(key string, field string, value any) error {
+	return defaultClient.HSetNX(key, field, value)
+}
+
+func HIncrBy(key string, field string, incr int64) (int64, error) {
+	return defaultClient.HIncrBy(key, field, incr)
+}
+
+func HDel(key string, field string) (int64, error) {
+	return defaultClient.HDel(key, field)
 }
 
 func HGetAll(key string) (map[string]string, error) {
@@ -201,6 +238,10 @@ func Expire(key string, second int) {
 // Del 删除
 func Del(key string) error {
 	return defaultClient.Del(key)
+}
+
+func Close() {
+	defaultClient.Close()
 }
 
 func NewClient(host, port, name, pass string, db int) (*Client, error) {

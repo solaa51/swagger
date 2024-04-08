@@ -28,6 +28,14 @@ func init() {
 	}
 }
 
+func init() {
+	AddCompile(`debug/pprof/cmdline`, "pprof/cmdline")
+	AddCompile(`debug/pprof/profile`, "pprof/profile")
+	AddCompile(`debug/pprof/symbol`, "pprof/symbol")
+	AddCompile(`debug/pprof/trace`, "pprof/trace")
+	AddCompile(`debug/pprof(/?|/\w+)`, "pprof/index")
+}
+
 // AddCompileGroup 设置路由分组规则，用来适配局部中间件调用
 func AddCompileGroup(name string, rules map[string]string, middle []middleware.Middleware) {
 	for k, v := range rules {

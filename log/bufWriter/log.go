@@ -2,6 +2,7 @@ package bufWriter
 
 import (
 	"fmt"
+	"github.com/solaa51/swagger/app"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -149,20 +150,19 @@ func Fatal(msg string, args ...any) {
 func caller() *slog.Source {
 	var source *slog.Source
 
-	pc, file, _, ok := runtime.Caller(3)
+	pc, file, line, ok := runtime.Caller(3)
 	if ok {
 		file = filepath.Base(file)
-		fs := runtime.CallersFrames([]uintptr{pc})
-		f, _ := fs.Next()
+		funcName := runtime.FuncForPC(pc).Name()
 		source = &slog.Source{
-			Function: f.Function,
-			File:     f.File,
-			Line:     f.Line,
+			Function: funcName,
+			File:     file,
+			Line:     line,
 		}
 	}
 
-	/*// 调试获取调用文件的层级
-	for i := 1; i < 25; i++ {
+	// 调试获取调用文件的层级
+	/*for i := 1; i < 25; i++ {
 		pc, file, line, ok := runtime.Caller(i)
 		if ok {
 			file = filepath.Base(file)
@@ -176,4 +176,5 @@ func caller() *slog.Source {
 
 func init() {
 	defaultLog = NewSwaLog("log-", false, true)
+	app.RegistClose(defaultLog.Close)
 }

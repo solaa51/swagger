@@ -27,12 +27,12 @@ import (
 
 //自动管理 数据库的连接与更新 配置文件更新时，实例也会同步更新
 
-func GetDb(dbUName string) (*gorm.DB, error) {
+func GetDb(dbUName string) (*gorm.DB, DbConf, error) {
 	if _, ok := dbInstances[dbUName]; ok {
-		return dbInstances[dbUName].dbIns, nil
+		return dbInstances[dbUName].dbIns, dbInstances[dbUName].dbConf, nil
 	}
 
-	return nil, errors.New("没找到对应数据库示例")
+	return nil, DbConf{}, errors.New("没找到对应数据库示例")
 }
 
 // ShowSql 为数据库连接实例开启sql日志
@@ -156,8 +156,14 @@ func link(conf DbConf) (*gorm.DB, error) {
 
 	sqlDB, _ := db.DB()
 	sqlDB.SetConnMaxLifetime(time.Minute * 10)
+	sqlDB.SetMaxOpenConns(100) //最大连接数
+	sqlDB.SetMaxIdleConns(10)  //最大空闲连接数
 
 	return db, nil
+}
+
+func LinkDb(conf DbConf) (*gorm.DB, error) {
+	return link(conf)
 }
 
 // 初始化数据库连接
@@ -198,7 +204,7 @@ func connectDb() {
 			}
 
 			if dd.dbConf.LogLevel != v.LogLevel {
-				db, _ := GetDb(v.UName)
+				db, _, _ := GetDb(v.UName)
 				setLogLevel(db, v.LogLevel)
 			}
 		} else {

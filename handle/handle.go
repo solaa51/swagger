@@ -6,7 +6,6 @@ import (
 	"expvar"
 	"github.com/solaa51/swagger/appConfig"
 	"github.com/solaa51/swagger/appPath"
-	"github.com/solaa51/swagger/cFunc"
 	"github.com/solaa51/swagger/context"
 	"github.com/solaa51/swagger/control"
 	"github.com/solaa51/swagger/limiter"
@@ -57,23 +56,28 @@ func preEnd(ctx *context.Context, status int, err error) {
 		Handler.httpReturn.End(ctx)
 	}
 
-	bufWriter.Info("",
-		slog.Int("status", status),
-		slog.String("takeTime", time.Since(ctx.StartTime).String()),
-		slog.String("structName", ctx.StructName),
-		slog.String("methodName", ctx.MethodName),
-		slog.String("requestId", ctx.RequestId),
-		slog.String("method", ctx.Request.Method),
-		slog.String("url", ctx.Request.URL.String()),
-		slog.String("ip", ctx.ClientIp),
-		slog.String("user-agent", ctx.Request.UserAgent()),
-	)
+	if ctx.Request.Method != "OPTIONS" {
+		bufWriter.Info("",
+			slog.Int("status", status),
+			slog.String("takeTime", time.Since(ctx.StartTime).String()),
+			slog.String("structName", ctx.StructName),
+			slog.String("methodName", ctx.MethodName),
+			slog.String("requestId", ctx.RequestId),
+			slog.String("method", ctx.Request.Method),
+			slog.String("url", ctx.Request.URL.String()),
+			slog.String("ip", ctx.ClientIp),
+			slog.String("user-agent", ctx.Request.UserAgent()),
+		)
+	}
+
+	context.CtxPool.Put(ctx)
 }
 
 // 请求处理入口
 func (h *Handle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	/******特殊处理url******/
-	if r.URL.Path == "/debug/var" && cFunc.LocalIP() { //公共变量的标准接口
+	//if r.URL.Path == "/debug/var" && cFunc.LocalIP() { //公共变量的标准接口
+	if r.URL.Path == "/debug/var" { //公共变量的标准接口
 		expvar.Handler().ServeHTTP(w, r)
 		return
 	}
@@ -146,7 +150,7 @@ func execCall(w http.ResponseWriter, r *http.Request, structName string, finalSt
 					slog.String("ip", ctx.ClientIp),
 					slog.String("user-agent", r.UserAgent()),
 					slog.String("paramData", string(pData)),
-					slog.String("body", string(ctx.BodyData)),
+					slog.String("body", string(*ctx.BodyData)),
 					slog.String("stackInfo", string(buf[:n])),
 				)
 

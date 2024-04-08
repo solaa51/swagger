@@ -5,21 +5,20 @@ import (
 	"bytes"
 	"context"
 	"crypto/md5"
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/solaa51/swagger/appPath"
-	"golang.org/x/net/http2"
 	"golang.org/x/sync/singleflight"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
 	"hash/crc32"
+	"hash/fnv"
 	"io"
 	"math"
-	"math/big"
+	rand2 "math/rand/v2"
 	"net"
 	"net/http"
 	"net/url"
@@ -31,7 +30,89 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unsafe"
 )
+
+// ParseSimpleJson 解析简单json数据为map[string]string结构
+// 参考格式：{"a":"b","c":123,"d":[1,2,3],"e":["h","i","j"]}
+// 参考格式：{"a":"b,c","c":123,"d":[1,2,3],"e":["h","i","j"]}
+func ParseSimpleJson(jsonByte *[]byte) (map[string]string, error) {
+	jsonStr := string(*jsonByte)
+	if jsonStr[0] != '{' || jsonStr[len(jsonStr)-1] != '}' {
+		return nil, errors.New("json格式错误")
+	}
+
+	var iis [][2]int
+	keys := 0
+
+	//特殊 :" -- "  :[ -- ]
+	for k, v := range jsonStr {
+		if k == 0 {
+			continue
+		}
+
+		if v == '"' && jsonStr[k+1] == ':' {
+			keys++
+		}
+
+		if v == '"' && jsonStr[k-1] == ':' {
+			iis = append(iis, [2]int{
+				k, k + strings.Index(jsonStr[k+1:], `"`) + 1,
+			})
+		}
+
+		if v == '[' && jsonStr[k-1] == ':' {
+			iis = append(iis, [2]int{
+				k, k + strings.Index(jsonStr[k+1:], `]`) + 1,
+			})
+		}
+	}
+
+	var snew bytes.Buffer
+	snew.Grow(len(jsonStr))
+	tiStrs := make([]string, len(iis))
+
+	if len(iis) == 0 {
+		snew.WriteString(jsonStr[1 : len(jsonStr)-1])
+	} else {
+		for k, v := range iis {
+			tiStrs[k] = jsonStr[v[0]+1 : v[1]]
+
+			if k == 0 {
+				snew.WriteString(jsonStr[1:v[0]] + "{{}}")
+			}
+
+			if k > 0 {
+				snew.WriteString(jsonStr[iis[k-1][1]+1:v[0]] + "{{}}")
+			}
+
+			if k == len(iis)-1 {
+				snew.WriteString(jsonStr[v[1]+1 : len(jsonStr)-1])
+			}
+		}
+	}
+
+	arr := make(map[string]string)
+
+	sl := strings.Split(snew.String(), ",")
+	rPIndex := 0
+	for _, v := range sl {
+		if v == "" {
+			continue
+		}
+		vv := strings.Split(v, `:`)
+		key := strings.TrimSpace(strings.ReplaceAll(strings.TrimSpace(vv[0]), `"`, ""))
+		val := strings.TrimSpace(vv[1])
+		if val == "{{}}" {
+			arr[key] = strings.TrimSpace(strings.ReplaceAll(tiStrs[rPIndex], `"`, ""))
+			rPIndex++
+		} else {
+			arr[key] = val
+		}
+	}
+
+	return arr, nil
+}
 
 // CheckCustomStructPtrExport 检测自定义struct指针参数并且可导出
 func CheckCustomStructPtrExport(dataPtr any) error {
@@ -86,6 +167,18 @@ func Sha256(in []byte) string {
 	m.Write(in)
 	b := m.Sum(nil)
 	return hex.EncodeToString(b)
+}
+
+func Sha256File(filePath string) (string, error) {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	hash := sha256.New()
+	_, _ = io.Copy(hash, f)
+	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
 // ComparePoint 比较数据是否相同 相同返回true
@@ -331,7 +424,7 @@ func SetTimeZone(zoneStr string) error {
 }
 
 func init() {
-	//timeZoneStr = "Asia/Shanghai"
+	//timeZoneStr := "Asia/Shanghai"
 	curZone, _ = time.LoadLocation("Local")
 }
 
@@ -488,27 +581,24 @@ func GetPost(method string, sUrl string, data map[string]string, head map[string
 
 	client := &http.Client{
 		Timeout: time.Second * 15,
-		//Transport: &http.Transport{
+		//Transport: &http2.Transport{
+		//	DialTLSContext: nil,
 		//	TLSClientConfig: &tls.Config{
 		//		InsecureSkipVerify: true, //跳过https验证
 		//	},
+		//	ConnPool:                   nil,
+		//	DisableCompression:         false,
+		//	AllowHTTP:                  true,
+		//	MaxHeaderListSize:          0,
+		//	MaxReadFrameSize:           0,
+		//	MaxDecoderHeaderTableSize:  0,
+		//	MaxEncoderHeaderTableSize:  0,
+		//	StrictMaxConcurrentStreams: false,
+		//	ReadIdleTimeout:            0,
+		//	PingTimeout:                0,
+		//	WriteByteTimeout:           0,
+		//	CountError:                 nil,
 		//},
-		Transport: &http2.Transport{
-			DialTLSContext:             nil,
-			TLSClientConfig:            nil,
-			ConnPool:                   nil,
-			DisableCompression:         false,
-			AllowHTTP:                  true,
-			MaxHeaderListSize:          0,
-			MaxReadFrameSize:           0,
-			MaxDecoderHeaderTableSize:  0,
-			MaxEncoderHeaderTableSize:  0,
-			StrictMaxConcurrentStreams: false,
-			ReadIdleTimeout:            0,
-			PingTimeout:                0,
-			WriteByteTimeout:           0,
-			CountError:                 nil,
-		},
 	}
 	response, err := client.Do(req)
 	_ = req.Body.Close()
@@ -539,21 +629,29 @@ func CheckMobile(mobile string) bool {
 }
 
 // RandRangeInt 生成随机数[n - m)
-func RandRangeInt(start, end int64) int64 {
+func RandRangeInt(start, end uint64) int64 {
 	if end < start {
-		return start
+		return int64(start)
 	}
 
 	if end == start {
-		return start
+		return int64(start)
 	}
 
-	n, _ := rand.Int(rand.Reader, big.NewInt(end-start))
+	n := RandInt(end - start)
 
-	return n.Int64() + start
+	return int64(n + start)
 }
 
-// Daemon 讲进程放入后台执行
+// RandInt 生成随机数[0 - max)
+func RandInt(max uint64) uint64 {
+	if max == 0 {
+		return 0
+	}
+	return rand2.Uint64N(max)
+}
+
+// Daemon 将进程放入后台执行
 func Daemon() {
 	if os.Getppid() != 1 { //判断父进程  父进程为1则表示已被系统接管
 		filePath, _ := filepath.Abs(os.Args[0]) //将启动命令 转换为 绝对地址命令
@@ -590,81 +688,32 @@ func sup(i int64, n int) string {
 	return m
 }
 
-// ParseSimpleJson 解析简单json数据为map[string]string结构
-// 参考格式：{"a":"b","c":123,"d":[1,2,3],"e":["h","i","j"]}
-func ParseSimpleJson(jsonStr string) (map[string]string, error) {
-	if jsonStr[0] != '{' || jsonStr[len(jsonStr)-1] != '}' {
-		return nil, errors.New("json格式错误")
+func Bytes2String(b []byte) string {
+	return unsafe.String(unsafe.SliceData(b), len(b))
+}
+
+func String2Bytes(s string) []byte {
+	return unsafe.Slice(unsafe.StringData(s), len(s))
+}
+
+// BreakSensitive 对铭感字符串脱敏处理
+func BreakSensitive(str string, frontLen int, behindLen int) string {
+	if len(str) > frontLen+behindLen {
+		return str[0:frontLen] + "****" + str[len(str)-behindLen:]
 	}
 
-	var iis [][2]int
-	keys := 0
+	return str
+}
 
-	//特殊 :" -- "  :[ -- ]
-	for k, v := range jsonStr {
-		if k == 0 {
-			continue
-		}
+// Fnv32a 计算字符串的hash值，将字符串转成整形
+func Fnv32a(str string) uint32 {
+	h := fnv.New32()
+	_, _ = h.Write(String2Bytes(str))
+	return h.Sum32()
+}
 
-		if v == '"' && jsonStr[k+1] == ':' {
-			keys++
-		}
-
-		if v == '"' && jsonStr[k-1] == ':' {
-			iis = append(iis, [2]int{
-				k, k + strings.Index(jsonStr[k+1:], `"`) + 1,
-			})
-		}
-
-		if v == '[' && jsonStr[k-1] == ':' {
-			iis = append(iis, [2]int{
-				k, k + strings.Index(jsonStr[k+1:], `]`) + 1,
-			})
-		}
-	}
-
-	var snew bytes.Buffer
-	snew.Grow(len(jsonStr))
-	tiStrs := make([]string, len(iis))
-
-	if len(iis) == 0 {
-		snew.WriteString(jsonStr[1 : len(jsonStr)-1])
-	} else {
-		for k, v := range iis {
-			tiStrs[k] = jsonStr[v[0]+1 : v[1]]
-
-			if k == 0 {
-				snew.WriteString(jsonStr[1:v[0]] + "{{}}")
-			}
-
-			if k > 0 {
-				snew.WriteString(jsonStr[iis[k-1][1]+1:v[0]] + "{{}}")
-			}
-
-			if k == len(iis)-1 {
-				snew.WriteString(jsonStr[v[1]+1 : len(jsonStr)-1])
-			}
-		}
-	}
-
-	arr := make(map[string]string)
-
-	sl := strings.Split(snew.String(), ",")
-	rPIndex := 0
-	for _, v := range sl {
-		if v == "" {
-			continue
-		}
-		vv := strings.Split(v, `:`)
-		key := strings.TrimSpace(strings.ReplaceAll(strings.TrimSpace(vv[0]), `"`, ""))
-		val := strings.TrimSpace(vv[1])
-		if val == "{{}}" {
-			arr[key] = strings.TrimSpace(strings.ReplaceAll(tiStrs[rPIndex], `"`, ""))
-			rPIndex++
-		} else {
-			arr[key] = val
-		}
-	}
-
-	return arr, nil
+// HashShard 求字符串的hash值分片数
+// @param shardCount 分配总数
+func HashShard(str string, shardCount int) int {
+	return int(Fnv32a(str)) % shardCount
 }
