@@ -5,9 +5,7 @@ import (
 	"net/http/pprof"
 )
 
-type Pprof struct {
-	Controller
-}
+type Pprof struct{}
 
 func (p *Pprof) Index(ctx *context.Context) {
 	pprof.Index(ctx.ResponseWriter, ctx.Request)

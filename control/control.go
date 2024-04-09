@@ -1,14 +1,7 @@
 package control
 
-type Control interface {
-	SetContext() error
-}
+// 给控制器定义一个空接口
+
+type Control interface{}
 
 type ControllerInstance func() Control
-
-type Controller struct {
-}
-
-func (c *Controller) SetContext() error {
-	return nil
-}
