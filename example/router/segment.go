@@ -1,0 +1,74 @@
+package router
+
+import "strings"
+
+// 路由匹配链表
+
+type Segment struct {
+	Name   string //路由单节字符串
+	Router *Router
+	Parent *Segment
+	Child  map[string]*Segment
+}
+
+func addSegment(path string, router *Router) {
+	s := strings.Split(path, "/")
+
+	parent := rootSegment
+	for i := range s {
+		parent.Child[s[i]] = &Segment{
+			Name:   s[i],
+			Router: router,
+			Parent: parent,
+			Child:  make(map[string]*Segment),
+		}
+
+		parent = parent.Child[s[i]]
+	}
+}
+
+func MatchHandleFunc(path string) *Segment {
+	s := strings.Split(path, "/")
+
+	temp := rootSegment
+	for i := range s {
+		if _, ok := temp.Child[s[i]]; !ok {
+			//检测同级别下是否有通配符
+			if _, ok = temp.Child["*"]; ok {
+				return temp.Child["*"]
+			}
+
+			continue
+		}
+
+		if temp.Router != nil {
+			return temp.Child[s[i]]
+		}
+
+		temp = temp.Child[s[i]]
+	}
+
+	// 检测是否有全匹配规则
+	if _, ok := rootSegment.Child["*"]; ok {
+		return rootSegment.Child["*"]
+	}
+
+	return nil
+}
+
+// 根节点
+var rootSegment = &Segment{
+	Name:   "/",
+	Router: nil,
+	Parent: nil,
+	Child:  make(map[string]*Segment),
+}
+
+// InitSegment 初始化链表路由规则
+func InitSegment() {
+	initLastHandlerFunc()
+
+	for k := range routers {
+		addSegment(k, routers[k])
+	}
+}
