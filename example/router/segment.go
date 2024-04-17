@@ -1,6 +1,9 @@
 package router
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // 路由匹配链表
 
@@ -11,6 +14,7 @@ type Segment struct {
 	Child  map[string]*Segment
 }
 
+// 生成路由匹配规则
 func addSegment(path string, router *Router) {
 	s := strings.Split(path, "/")
 
@@ -27,6 +31,7 @@ func addSegment(path string, router *Router) {
 	}
 }
 
+// MatchHandleFunc 匹配路由查找对应方法
 func MatchHandleFunc(path string) *Segment {
 	s := strings.Split(path, "/")
 
@@ -64,11 +69,16 @@ var rootSegment = &Segment{
 	Child:  make(map[string]*Segment),
 }
 
-// InitSegment 初始化链表路由规则
-func InitSegment() {
+// InitRouterSegment 初始化链表路由规则
+func InitRouterSegment() {
 	initLastHandlerFunc()
 
 	for k := range routers {
 		addSegment(k, routers[k])
 	}
+
+	//TODO 可根据routers生成配置 可放到config下，监听变更，允许在线微调
+	fmt.Println(routers)
+
+	fmt.Println(rootSegment.Child)
 }
