@@ -5,6 +5,7 @@ import (
 	"github.com/solaa51/swagger/handleFuncParse"
 	"github.com/solaa51/swagger/log/bufWriter"
 	"github.com/solaa51/swagger/middleware"
+	"strings"
 )
 
 var routers = make(map[string]*Router)
@@ -21,6 +22,16 @@ type RouteParse struct {
 	Middleware []middleware.Middleware //中间件 多个 可多次添加 当有一次使用后 清空
 }
 
+// 检测路由
+func (r *RouteParse) checkPath(str string) string {
+	s := strings.ReplaceAll(str, "//", "/")
+	if s[0] == byte('/') {
+		return s[1:]
+	} else {
+		return s
+	}
+}
+
 // Prefix 设置路由前缀
 func (r *RouteParse) Prefix(str string) *RouteParse {
 	r.prefix = str
@@ -35,7 +46,7 @@ func (r *RouteParse) BindFunc(path string, f func(*context.Context)) *RouteParse
 	}
 
 	fu := handleFuncParse.ParseFuncToRoute(r.prefix+path, f)
-	routers[r.prefix+path] = &Router{
+	routers[r.checkPath(r.prefix+"/"+path)] = &Router{
 		Handler:    fu,
 		Middleware: r.Middleware,
 	}
@@ -49,7 +60,7 @@ func (r *RouteParse) BindFunc(path string, f func(*context.Context)) *RouteParse
 func (r *RouteParse) BindStruct(strut handleFuncParse.ControllerInstance, aliasName string) *RouteParse {
 	ms := handleFuncParse.ParseStructToRoute(strut, aliasName)
 	for k := range ms {
-		routers[r.prefix+k] = &Router{
+		routers[r.checkPath(r.prefix+"/"+k)] = &Router{
 			Handler:    ms[k],
 			Middleware: r.Middleware,
 		}
@@ -64,7 +75,7 @@ func (r *RouteParse) BindStruct(strut handleFuncParse.ControllerInstance, aliasN
 func (r *RouteParse) BindStructs(struts ...handleFuncParse.ControllerInstance) *RouteParse {
 	ms := handleFuncParse.ParseStructsToRoute(struts...)
 	for k := range ms {
-		routers[r.prefix+k] = &Router{
+		routers[r.checkPath(r.prefix+"/"+k)] = &Router{
 			Handler:    ms[k],
 			Middleware: r.Middleware,
 		}
@@ -88,7 +99,7 @@ func (r *RouteParse) MatchFunc(newPath, structFuncName string) *RouteParse {
 
 	f := handleFuncParse.MatchAndDelHandler(structFuncName)
 	if f != nil {
-		routers[r.prefix+newPath] = &Router{
+		routers[r.checkPath(r.prefix+"/"+newPath)] = &Router{
 			Handler:    f,
 			Middleware: r.Middleware,
 		}
@@ -103,7 +114,7 @@ func (r *RouteParse) MatchFunc(newPath, structFuncName string) *RouteParse {
 func (r *RouteParse) MatchPrefixToFunc(structFuncName string) *RouteParse {
 	f := handleFuncParse.MatchAndDelHandler(structFuncName)
 	if f != nil {
-		routers[r.prefix+"*"] = &Router{
+		routers[r.checkPath(r.prefix+"/*")] = &Router{
 			Handler:    f,
 			Middleware: r.Middleware,
 		}

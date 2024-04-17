@@ -240,6 +240,8 @@ func init() {
 		structs:    nil,
 		httpReturn: defaultHttpReturn{},
 	}
+
+	//TODO 初始化路由 handle下面匹配 路由地址与方法 [间接调用router-segemnt]
 }
 
 // SetCustomHttpReturn 设置自定义http返回格式
