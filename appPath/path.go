@@ -15,7 +15,7 @@ func AppDir() string {
 	//如果路径中 含有 /T/go-build 字符 则可认为是 go run 下执行的临时程序
 	switch runtime.GOOS {
 	case "windows":
-		if strings.Contains(dir, "\\Temp\\go-build") {
+		if strings.Contains(dir, "\\Temp\\go-build") || strings.Contains(dir, "\\Temp\\GoLand") {
 			dir, _ = os.Getwd()
 		}
 	case "linux":
