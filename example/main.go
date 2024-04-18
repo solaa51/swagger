@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/solaa51/swagger/context"
-	"github.com/solaa51/swagger/example/router"
+	"github.com/solaa51/swagger/routerV2"
 )
 
 func main() {

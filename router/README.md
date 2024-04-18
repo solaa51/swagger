@@ -1,4 +1,4 @@
-自定义路由处理器
+自定义路由处理器 准备移除
 
     调用方式：
         1. router.AddCompile(`auth/(\w+)`, "auth/$1")
