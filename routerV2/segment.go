@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -32,33 +31,49 @@ func addSegment(path string, router *Router) {
 }
 
 // MatchHandleFunc 匹配路由查找对应方法
-func MatchHandleFunc(path string) *Segment {
-	s := strings.Split(path, "/")
+func MatchHandleFunc(urlPath string) (*Segment, []string) {
+	if strings.HasSuffix(urlPath, "/") {
+		urlPath = urlPath[0 : len(urlPath)-1]
+	}
 
+	if strings.HasPrefix(urlPath, "/") {
+		urlPath = urlPath[1:]
+	}
+
+	s := strings.Split(urlPath, "/")
+
+	var sig *Segment
 	temp := rootSegment
-	for i := range s {
+	j := 0
+	for i := range s { //将urlPath一层层比对
+		j = i
 		if _, ok := temp.Child[s[i]]; !ok {
 			//检测同级别下是否有通配符
 			if _, ok = temp.Child["*"]; ok {
-				return temp.Child["*"]
+				return temp.Child["*"], []string{}
 			}
 
 			continue
 		}
 
-		if temp.Router != nil {
-			return temp.Child[s[i]]
+		if len(temp.Child[s[i]].Child) == 0 {
+			sig = temp.Child[s[i]]
+			break
 		}
 
 		temp = temp.Child[s[i]]
 	}
 
-	// 检测是否有全匹配规则
-	if _, ok := rootSegment.Child["*"]; ok {
-		return rootSegment.Child["*"]
+	if sig != nil {
+		return sig, s[j+1:]
 	}
 
-	return nil
+	// 检测是否有全匹配规则
+	if _, ok := rootSegment.Child["*"]; ok {
+		return rootSegment.Child["*"], []string{}
+	}
+
+	return nil, nil
 }
 
 // 根节点
@@ -76,9 +91,4 @@ func InitRouterSegment() {
 	for k := range routers {
 		addSegment(k, routers[k])
 	}
-
-	//TODO 可根据routers生成配置 可放到config下，监听变更，允许在线微调
-	fmt.Println(routers)
-
-	fmt.Println(rootSegment.Child)
 }

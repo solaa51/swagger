@@ -8,17 +8,17 @@ import (
 )
 
 // ParseFunc 直接注册方法
-func ParseFunc(pattern string, f func(*context.Context)) {
-	if _, ok := handleFuncs[pattern]; ok {
-		bufWriter.Fatal("初始化方法存在路由冲突", pattern)
+func ParseFunc(structFuncName string, f func(*context.Context)) {
+	if _, ok := handleFuncs[structFuncName]; ok {
+		bufWriter.Fatal("初始化方法存在路由冲突", structFuncName)
 	}
 
-	handleFuncs[pattern] = ParseFuncToRoute(pattern, f)
+	handleFuncs[structFuncName] = ParseFuncToRoute(structFuncName, f)
 }
 
-func ParseFuncToRoute(pattern string, f func(*context.Context)) *HandleFunc {
+func ParseFuncToRoute(structFuncName string, f func(*context.Context)) *HandleFunc {
 	return &HandleFunc{
-		StructFuncName: pattern,
+		StructFuncName: structFuncName,
 		methodValue:    reflect.ValueOf(f),
 		inType:         []string{""},
 	}

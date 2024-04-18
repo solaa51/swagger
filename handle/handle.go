@@ -11,7 +11,7 @@ import (
 	"github.com/solaa51/swagger/limiter"
 	"github.com/solaa51/swagger/log/bufWriter"
 	"github.com/solaa51/swagger/middleware"
-	"github.com/solaa51/swagger/router"
+	"github.com/solaa51/swagger/routerV2"
 	"log/slog"
 	"net/http"
 	"os"
@@ -27,13 +27,6 @@ type HttpReturn interface {
 	End404(ctx *context.Context, err error)
 	End500(ctx *context.Context, err error)
 	End(ctx *context.Context)
-}
-
-type Handle struct {
-	//控制器对应绑定关系
-	structs map[string]control.ControllerInstance
-
-	httpReturn HttpReturn
 }
 
 const (
@@ -60,8 +53,7 @@ func preEnd(ctx *context.Context, status int, err error) {
 		bufWriter.Info("",
 			slog.Int("status", status),
 			slog.String("takeTime", time.Since(ctx.StartTime).String()),
-			slog.String("structName", ctx.StructName),
-			slog.String("methodName", ctx.MethodName),
+			slog.String("structFuncName", ctx.StructFuncName),
 			slog.String("requestId", ctx.RequestId),
 			slog.String("method", ctx.Request.Method),
 			slog.String("url", ctx.Request.URL.String()),
@@ -71,6 +63,18 @@ func preEnd(ctx *context.Context, status int, err error) {
 	}
 
 	context.CtxPool.Put(ctx)
+}
+
+type Handle struct {
+	//控制器对应绑定关系
+	structs map[string]control.ControllerInstance
+
+	httpReturn HttpReturn
+}
+
+// 加载所有路由规则
+func (h *Handle) loadRouter() {
+	router.InitRouterSegment()
 }
 
 // 请求处理入口
@@ -86,49 +90,37 @@ func (h *Handle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//调用全局中间件
 	for _, m := range middleware.GlobalMiddleware {
 		if !m.Handle(w, r) {
-			preEnd(context.NewContext(w, r, "", "", ""), 0, nil)
+			preEnd(context.NewContext(w, r, ""), 0, nil)
 			return
 		}
 	}
 
-	// 自定义路由规则匹配 解析为：class/method [params]，无法解析则返回空
-	structName, methodName, args, middle := router.ParseUrlPath(r.URL.Path)
-	//fmt.Println(structName, methodName, args)
-	// 解析出有类和方法 进入handler匹配
-	if structName != "" && methodName != "" {
-		callStructName, finalStructName, has, err := checkMethod(structName, methodName, args...)
-		if err != nil {
-			preEnd(context.NewContext(w, r, structName, "", methodName), StatusNotFound, err)
+	hand, args := router.MatchHandleFunc(r.URL.Path)
+	if hand != nil {
+		//全局限流保护
+		if limiter.Allow() {
+			execCall(w, r, hand, args...)
 			return
-		}
-
-		if has {
-			//全局限流保护
-			if limiter.Allow() {
-				// 执行调用
-				execCall(w, r, callStructName, finalStructName, methodName, middle, args...)
-				return
-			} else {
-				w.WriteHeader(http.StatusTooManyRequests)
-				_, _ = w.Write([]byte("too many requests"))
-				return
-			}
+		} else {
+			w.WriteHeader(http.StatusTooManyRequests)
+			_, _ = w.Write([]byte("too many requests"))
+			return
 		}
 	}
 
 	// 解析前端路由和文件处理
 	f, err := staticFile(r.URL.Path)
 	if err != nil {
-		preEnd(context.NewContext(w, r, "", "", ""), StatusNotFound, err)
+		preEnd(context.NewContext(w, r, ""), StatusNotFound, err)
 		return
 	}
 	http.ServeFile(w, r, f)
 }
 
 // 执行方法调用
-func execCall(w http.ResponseWriter, r *http.Request, structName string, finalStructName string, methodName string, middle []middleware.Middleware, args ...string) {
+func execCall(w http.ResponseWriter, r *http.Request, handler *router.Segment, args ...string) {
 	//生成context
-	ctx := context.NewContext(w, r, hss[structName].name, finalStructName, methodName)
+	ctx := context.NewContext(w, r, handler.Router.Handler.StructFuncName)
 
 	var err error
 
@@ -142,8 +134,7 @@ func execCall(w http.ResponseWriter, r *http.Request, structName string, finalSt
 				// 是否继续向上层抛出panic(e)
 				pData, _ := json.Marshal(ctx.GetPost)
 				bufWriter.Error("[REQUEST PANIC]",
-					slog.String("structName", ctx.StructName),
-					slog.String("methodName", ctx.MethodName),
+					slog.String("structFuncName", ctx.StructFuncName),
 					slog.String("requestId", ctx.RequestId),
 					slog.String("method", r.Method),
 					slog.String("url", r.URL.String()),
@@ -160,7 +151,7 @@ func execCall(w http.ResponseWriter, r *http.Request, structName string, finalSt
 	}()
 
 	//调用中间件处理
-	for _, m := range middle {
+	for _, m := range handler.Router.Middleware {
 		if !m.Handle(ctx) {
 			preEnd(ctx, 0, nil)
 			return
@@ -168,9 +159,9 @@ func execCall(w http.ResponseWriter, r *http.Request, structName string, finalSt
 	}
 
 	//调用方法
-	err = hss[structName].call(ctx, methodName, args...)
+	err = handler.Router.Handler.Call(ctx, args...)
 	if err != nil {
-		preEnd(context.NewContext(w, r, structName, finalStructName, methodName), StatusFail, err)
+		preEnd(context.NewContext(w, r, handler.Router.Handler.StructFuncName), StatusFail, err)
 		return
 	}
 
@@ -210,38 +201,8 @@ func staticFile(urlPath string) (string, error) {
 	return f, nil
 }
 
-// 检查struct 方法 参数是否匹配
-func checkMethod(structName string, methodName string, args ...string) (string, string, bool, error) {
-	sName := structName
-
-	if _, ok := hss[sName]; !ok {
-		sName = strings.ToUpper(sName[:1]) + sName[1:]
-		if _, ok = hss[sName]; !ok {
-			return "", "", false, nil
-		}
-	}
-
-	v := hss[sName]
-	if _, ok := v.method[methodName]; !ok {
-		return "", "", false, nil
-	}
-
-	if len(v.method[methodName].in)-1 != len(args) {
-		return sName, hss[sName].name, true, errors.New("参数不匹配")
-	}
-
-	return sName, hss[sName].name, true, nil
-}
-
-var Handler *Handle
-
-func init() {
-	Handler = &Handle{
-		structs:    nil,
-		httpReturn: defaultHttpReturn{},
-	}
-
-	//TODO 初始化路由 handle下面匹配 路由地址与方法 [间接调用router-segemnt]
+var Handler = &Handle{
+	httpReturn: defaultHttpReturn{},
 }
 
 // SetCustomHttpReturn 设置自定义http返回格式

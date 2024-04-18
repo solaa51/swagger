@@ -8,6 +8,7 @@ import (
 	"github.com/solaa51/swagger/cFunc"
 	"github.com/solaa51/swagger/handle"
 	"github.com/solaa51/swagger/log/bufWriter"
+	router "github.com/solaa51/swagger/routerV2"
 	"github.com/solaa51/swagger/watchConfig"
 	"net"
 	"net/http"
@@ -62,6 +63,9 @@ func start(restart bool) {
 			bufWriter.Fatal("监听端口失败", err)
 		}
 	}
+
+	//加载路由
+	router.InitRouterSegment()
 
 	server := &http.Server{
 		Addr:    httpAddr,

@@ -39,14 +39,14 @@ func (r *RouteParse) Prefix(str string) *RouteParse {
 }
 
 // BindFunc 绑定函数
-func (r *RouteParse) BindFunc(path string, f func(*context.Context)) *RouteParse {
-	if r.prefix == "" && path == "" {
+func (r *RouteParse) BindFunc(structFuncName string, f func(*context.Context)) *RouteParse {
+	if r.prefix == "" && structFuncName == "" {
 		bufWriter.Info("BindFunc空路由,跳过处理")
 		return r
 	}
 
-	fu := handleFuncParse.ParseFuncToRoute(r.prefix+path, f)
-	routers[r.checkPath(r.prefix+"/"+path)] = &Router{
+	fu := handleFuncParse.ParseFuncToRoute(structFuncName, f)
+	routers[r.checkPath(r.prefix+"/"+structFuncName)] = &Router{
 		Handler:    fu,
 		Middleware: r.Middleware,
 	}
