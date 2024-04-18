@@ -107,7 +107,7 @@ type appServer struct {
 
 // 重启服务 启用新进程接收新的请求
 func (s *appServer) restart() {
-	bufWriter.Info("开始重启服务")
+	bufWriter.Warn("开始重启服务")
 
 	ln := s.listener.(*net.TCPListener)
 
@@ -158,7 +158,7 @@ func (s *appServer) watchSelf() {
 					}
 				}
 
-				bufWriter.Info(execFile, "文件变更触发重启更新，发送热更新信号")
+				bufWriter.Warn(execFile, "文件变更触发重启更新，发送热更新信号")
 				p, _ := os.FindProcess(os.Getpid())
 				_ = p.Signal(syscall.SIGHUP)
 			}

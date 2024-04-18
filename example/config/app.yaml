@@ -1,9 +1,5 @@
-##
-## 所有路径均以"config/"为根目录书写
-##
-
 # 服务名称
-name: "测试"
+name: "使用案例的ss"
 
 # 环境标识默认为local 本地local 测试test 预发pre 生产prod
 env: "local"
@@ -22,10 +18,10 @@ staticDir:
 # https默认不启用
 # https证书地址为配置文件目录
 http:
-  port: "8079"
-  https: false
-  #httpsPem: "ssl/ssl.pem"
-  #httpsKey: "ssl/ssl.key"
+  port: "9999" # 端口号 修改无法触发更新生效
+  #https: false
+  #httpsPem: "git.baobeilai.top_nginx/git.baobeilai.top.pem"
+  #httpsKey: "git.baobeilai.top_nginx/git.baobeilai.top.key"
 
 # 多机器负载均衡时设置服务ID
 # 用于分布式ID生成

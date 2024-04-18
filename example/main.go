@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/solaa51/swagger/appServer"
 	"github.com/solaa51/swagger/context"
 	"github.com/solaa51/swagger/routerV2"
 )
@@ -21,6 +22,9 @@ func main() {
 
 	// 给handler初始化路由
 	router.InitRouterSegment()
+
+	appServer.Run()
+	//进一步精简 app.yaml文件也可以丢掉 允许后期增加该文件
 
 	// 中间件 或 路由 是否有必要支持  局部方法 限流处理
 

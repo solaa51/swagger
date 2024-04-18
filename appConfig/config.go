@@ -7,14 +7,16 @@ import (
 	"github.com/solaa51/swagger/watchConfig"
 	"gopkg.in/yaml.v3"
 	"os"
+	"path/filepath"
 	"strings"
+	"syscall"
 )
 
 /**
 配置文件解析 app.toml
 */
 
-var config *Config
+var config = &Config{}
 
 // Http http服务配置
 type Http struct {
@@ -60,6 +62,40 @@ func Info() *Config {
 	return config
 }
 
+// 检查http配置
+func (c *Config) checkHttpConfig() {
+	if config.Http.PORT == "" { //初始 服务刚启动 未配置端口
+		if c.Http.PORT == "" {
+			c.Http.PORT, _ = cFunc.GetFreePort()
+		}
+
+		return
+	}
+
+	if c.Http.PORT == "" { //沿用当前配置
+		c.Http.PORT = config.Http.PORT
+		c.Http.HTTPS = config.Http.HTTPS
+		c.Http.HTTPSKEY = config.Http.HTTPSKEY
+		c.Http.HTTPSPEM = config.Http.HTTPSPEM
+		return
+	}
+
+	if c.Http.PORT != config.Http.PORT {
+		bufWriter.Warn("app.yaml配置http端口与当前配置不一致，热更新无法修改端口")
+		c.Http.PORT = config.Http.PORT
+	}
+
+	if c.Http.HTTPS != config.Http.HTTPS ||
+		c.Http.HTTPSKEY != config.Http.HTTPSKEY ||
+		c.Http.HTTPSPEM != config.Http.HTTPSPEM {
+
+		execFile, _ := filepath.Abs(os.Args[0])
+		bufWriter.Warn(execFile, "app.yaml文件下http服务配置变更触发重启更新，发送热更新信号")
+		p, _ := os.FindProcess(os.Getpid())
+		_ = p.Signal(syscall.SIGHUP)
+	}
+}
+
 func (c *Config) check() {
 	//初始化部分配置信息
 	if c.Env == "" {
@@ -68,10 +104,6 @@ func (c *Config) check() {
 
 	if c.ServerId == 0 {
 		c.ServerId = 1
-	}
-
-	if c.Http.PORT == "" {
-		c.Http.PORT, _ = cFunc.GetFreePort()
 	}
 
 	//if c.Static.Prefix == "" {
@@ -106,20 +138,30 @@ func (c *Config) check() {
 	}
 }
 
-func newConfig() *Config {
+func parseConfigFile() (*Config, error) {
 	c := &Config{}
-	//加载配置文件
 	f, err := os.ReadFile(appPath.ConfigDir() + "app.yaml")
 	if err != nil {
-		bufWriter.Fatal("查找app.yaml配置文件失败", err)
+		bufWriter.Warn("未配置" + appPath.ConfigDir() + "app.yaml")
+	} else {
+		err = yaml.Unmarshal(f, c)
+		if err != nil {
+			bufWriter.Warn("解析app.yaml配置文件失败", err)
+			return nil, err
+		}
 	}
 
-	err = yaml.Unmarshal(f, c)
+	return c, nil
+}
+
+func newConfig() *Config {
+	c, err := parseConfigFile()
 	if err != nil {
-		bufWriter.Fatal("解析app.yaml配置文件失败", err)
+		c = &Config{}
 	}
 
 	c.check()
+	c.checkHttpConfig()
 
 	if c.Env == "" || c.Env == "local" {
 		bufWriter.SetDefaultStdout(true)
