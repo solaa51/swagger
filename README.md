@@ -23,13 +23,15 @@ go-web框架
         同样返回 json: hello world
         同样终端打印日志
             gin qps 3800
-            swagger regex qps 3550
+            swagger regexp qps 3550
             swagger mapLink qps 3500
 
         关闭日志：
-            swagger mapLink qps 4200
-            swagger regex qps 4165
             gin qps 4100 [仅关了终端彩色日志，没找到彻底关闭的方法]
+            swagger regexp qps 4165
+            swagger mapLink qps 4200
+
+    感觉偏差有点大，再找个不受影响的环境测试
 
 
 ## 对外开放的方法及路由规则 调整为显式加载 减少隐式加载的黑洞

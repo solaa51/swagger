@@ -53,7 +53,7 @@ func MatchHandleFunc(urlPath string) (*Segment, []string) {
 				return temp.Child["*"], []string{}
 			}
 
-			continue
+			break
 		}
 
 		if len(temp.Child[s[i]].Child) == 0 {
