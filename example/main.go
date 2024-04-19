@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/solaa51/swagger/appServer"
 	"github.com/solaa51/swagger/context"
 	router "github.com/solaa51/swagger/routerV2"
@@ -10,12 +9,12 @@ import (
 func init() {
 	//配置路由规则
 	r := &router.RouteParse{}
-	r.Prefix("api").BindFunc("welcome/index2", func(ctx *context.Context) {
+	r.BindFunc("welcome/index2", func(ctx *context.Context) {
 		ctx.RetData = "hello world2"
 	})
 
-	(&router.RouteParse{}).Prefix("gameApi").BindFunc("gameMall/index", func(context *context.Context) {
-		fmt.Println("hello game api welcome")
+	(&router.RouteParse{}).Prefix("gameApi").BindFunc("gameMall/index", func(ctx *context.Context) {
+		ctx.RetData = "hello world2"
 	})
 }
 

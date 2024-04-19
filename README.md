@@ -18,6 +18,20 @@ go-web框架
     router 再对规则二次定义
         初始化后对handler做删除，使handler全部移交给router处理
 
+    这次改版有点蛋疼：
+        同样请求 /welcome/index
+        同样返回 json: hello world
+        同样终端打印日志
+            gin qps 3800
+            swagger regex qps 3550
+            swagger mapLink qps 3500
+
+        关闭日志：
+            swagger mapLink qps 4200
+            swagger regex qps 4165
+            gin qps 4100 [仅关了终端彩色日志，没找到彻底关闭的方法]
+
+
 ## 对外开放的方法及路由规则 调整为显式加载 减少隐式加载的黑洞
 
 ## http pprof内置支持
