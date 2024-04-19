@@ -7,7 +7,6 @@ import (
 	"github.com/solaa51/swagger/appConfig"
 	"github.com/solaa51/swagger/appPath"
 	"github.com/solaa51/swagger/context"
-	"github.com/solaa51/swagger/control"
 	"github.com/solaa51/swagger/limiter"
 	"github.com/solaa51/swagger/log/bufWriter"
 	"github.com/solaa51/swagger/middleware"
@@ -66,9 +65,6 @@ func preEnd(ctx *context.Context, status int, err error) {
 }
 
 type Handle struct {
-	//控制器对应绑定关系
-	structs map[string]control.ControllerInstance
-
 	httpReturn HttpReturn
 }
 
