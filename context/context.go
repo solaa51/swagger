@@ -35,7 +35,7 @@ type Context struct {
 	Request        *http.Request
 	StartTime      time.Time //记录请求开始处理时间
 
-	RequestId      string
+	RequestId      int64
 	StructFuncName string //最终调用的structFuncName 如果为方法则为自定义名称 如果为struct则为struct/method
 
 	GetPost  url.Values        //get参数与 form-data或者x-www-form-urlencoded合集
@@ -57,7 +57,7 @@ func NewContext(w http.ResponseWriter, r *http.Request, structFuncName string) *
 	ctx.ResponseWriter = w
 	ctx.Request = r
 	ctx.StartTime = time.Now()
-	ctx.RequestId = snowflake.ID()
+	ctx.RequestId = snowflake.IDInt64()
 	ctx.StructFuncName = structFuncName
 	ctx.BodyData = nil
 	ctx.JsonData = make(map[string]string)

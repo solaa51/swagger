@@ -119,6 +119,10 @@ func ID() string {
 	return node.NextIdStr()
 }
 
+func IDInt64() int64 {
+	return node.NextIdInt64()
+}
+
 // ServerId 根据生成的snowId计算出机器ID
 func ServerId(snowId string) int64 {
 	sidInt, _ := strconv.ParseInt(snowId, 10, 64)

@@ -53,7 +53,7 @@ func preEnd(ctx *context.Context, status int, err error) {
 			slog.Int("status", status),
 			slog.String("takeTime", time.Since(ctx.StartTime).String()),
 			slog.String("structFuncName", ctx.StructFuncName),
-			slog.String("requestId", ctx.RequestId),
+			slog.Int64("requestId", ctx.RequestId),
 			slog.String("method", ctx.Request.Method),
 			slog.String("url", ctx.Request.URL.String()),
 			slog.String("ip", ctx.ClientIp),
@@ -131,7 +131,7 @@ func execCall(w http.ResponseWriter, r *http.Request, handler *router.Segment, a
 				pData, _ := json.Marshal(ctx.GetPost)
 				bufWriter.Error("[REQUEST PANIC]",
 					slog.String("structFuncName", ctx.StructFuncName),
-					slog.String("requestId", ctx.RequestId),
+					slog.Int64("requestId", ctx.RequestId),
 					slog.String("method", r.Method),
 					slog.String("url", r.URL.String()),
 					slog.String("ip", ctx.ClientIp),
