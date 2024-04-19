@@ -2,7 +2,7 @@ package router
 
 import (
 	"github.com/solaa51/swagger/context"
-	"github.com/solaa51/swagger/handleFuncParse"
+	"github.com/solaa51/swagger/handle/handleFuncParse"
 	"github.com/solaa51/swagger/log/bufWriter"
 	"github.com/solaa51/swagger/middleware"
 	"strings"
