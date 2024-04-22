@@ -18,7 +18,7 @@ go-web框架
     router 再对规则二次定义
         初始化后对handler做删除，使handler全部移交给router处理
 
-    这次改版有点蛋疼：
+    这次改版有点蛋疼：mac mini 六核intel core i7 32G内存
         同样请求 /welcome/index
         同样返回 json: hello world
         同样终端打印日志
