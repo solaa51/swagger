@@ -45,6 +45,9 @@ type Config struct {
 	//默认为local 其他值则日志不会在标准打印
 	Env string `yaml:"env"`
 
+	//md5加密盐
+	Md5Salt string `yaml:"md5Salt"`
+
 	//服务实例节点ID
 	ServerId int64 `yaml:"serverId"`
 

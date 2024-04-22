@@ -4,6 +4,9 @@ name: "使用案例的ss"
 # 环境标识默认为local 本地local 测试test 预发pre 生产prod
 env: "local"
 
+# md5加密盐
+md5Salt: ""
+
 # 静态文件解析目录
 staticDir:
 # html代码内的前缀路径 用户替换路径 默认为空
