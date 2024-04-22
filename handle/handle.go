@@ -68,11 +68,6 @@ type Handle struct {
 	httpReturn HttpReturn
 }
 
-// 加载所有路由规则
-func (h *Handle) loadRouter() {
-	router.InitRouterSegment()
-}
-
 // 请求处理入口
 func (h *Handle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	/******特殊处理url******/

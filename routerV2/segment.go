@@ -1,6 +1,10 @@
 package router
 
 import (
+	"github.com/solaa51/swagger/appPath"
+	"github.com/solaa51/swagger/cFunc"
+	"os"
+	"slices"
 	"strings"
 )
 
@@ -96,4 +100,35 @@ func InitRouterSegment() {
 	for k := range routers {
 		addSegment(k, routers[k])
 	}
+
+	printSegment()
+}
+
+// 将当前适配的规则写入配置文件
+func printSegment() {
+	_ = os.Remove(appPath.ConfigDir() + "router.txt")
+	pSeg(rootSegment)
+}
+
+// 递归打印每个可适配路由规则
+func pSeg(seg *Segment) {
+	if len(seg.Child) > 0 {
+		for _, v := range seg.Child {
+			pSeg(v)
+		}
+	} else {
+		_ = cFunc.WriteFile(appPath.ConfigDir()+"router.txt", []byte(segToRoutePath(seg)+" ==> "+seg.Router.Handler.StructFuncName+"\n"))
+	}
+}
+
+// 将路由链表转为路由字符串 反向查找
+func segToRoutePath(seg *Segment) string {
+	p := make([]string, 0)
+	for i := seg; i.Parent != nil; i = i.Parent {
+		p = append(p, i.Name)
+	}
+
+	slices.Reverse(p)
+
+	return "/" + strings.Join(p, "/")
 }
