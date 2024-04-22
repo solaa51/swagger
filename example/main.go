@@ -12,8 +12,6 @@ func init() {
 	//配置路由规则
 	r := &router.RouteParse{}
 	r.BindFunc("welcome/index2", func(ctx *context.Context) {
-		router.PrintSegment()
-
 		ctx.RetData = "hello world2"
 	})
 
