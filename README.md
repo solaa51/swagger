@@ -24,11 +24,11 @@ go-web框架
         同样终端打印日志
             gin qps 3800
             swagger regexp qps 3550
-            swagger mapLink qps 3500
+            swagger mapLink qps 3840
 
         关闭日志：
             gin qps 4100 [仅关了终端彩色日志，没找到彻底关闭的方法]
-            swagger regexp qps 4165
+            swagger regexp qps  4050 4165
             swagger mapLink qps 4200
 
     感觉偏差有点大，再找个不受影响的环境测试
