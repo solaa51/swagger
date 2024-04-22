@@ -19,6 +19,11 @@ func addSegment(path string, router *Router) {
 
 	parent := rootSegment
 	for i := range s {
+		if _, ok := parent.Child[s[i]]; ok {
+			parent = parent.Child[s[i]]
+			continue
+		}
+
 		parent.Child[s[i]] = &Segment{
 			Name:   s[i],
 			Router: router,
