@@ -12,8 +12,7 @@ import (
 
 //登录
 
-type Auth struct {
-}
+type Auth struct{}
 
 func (a *Auth) Login(ctx *context.Context) {
 	data, err := ctx.CheckField([]*context.CheckField{
