@@ -16,15 +16,13 @@ func init() {
 	//配置全局中间件
 	middleware.GlobalMiddleware = append(middleware.GlobalMiddleware, &middleware2.CrossDomain{})
 
-	//
-	r := &router.RouteParse{}
-	r.BindFunc("welcome/index", func(ctx *context.Context) {
+	(&router.RouteParse{}).BindFunc("welcome/index", func(ctx *context.Context) {
 		ctx.RetData = "hello world2"
 	})
-	//
-	//(&router.RouteParse{}).Prefix("gameApi").BindFunc("gameMall/index", func(ctx *context.Context) {
-	//	ctx.RetData = "hello world2"
-	//})
+
+	(&router.RouteParse{}).Prefix("gameApi").BindFunc("gameMall/index", func(ctx *context.Context) {
+		ctx.RetData = "hello world2"
+	})
 
 	(&router.RouteParse{}).Prefix("api").BindMiddleware(
 		&middleware2.CheckAdmin{},
