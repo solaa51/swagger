@@ -145,9 +145,10 @@ func link(conf DbConf) (*gorm.DB, error) {
 			SingularTable: true, //使用单表名
 		},
 		Logger: logger.New(newDbLogWriter(logPrefix), logger.Config{
-			SlowThreshold: time.Duration(slowTime) * time.Millisecond,
-			Colorful:      false,
-			LogLevel:      levelStrToGorm(conf.LogLevel),
+			IgnoreRecordNotFoundError: true,
+			SlowThreshold:             time.Duration(slowTime) * time.Millisecond,
+			Colorful:                  false,
+			LogLevel:                  levelStrToGorm(conf.LogLevel),
 		}),
 	})
 	if err != nil {
