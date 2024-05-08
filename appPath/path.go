@@ -9,6 +9,7 @@ import (
 )
 
 // AppDir 返回app当前的绝对目录包含目录符号
+// 调试模式下如果以下未包含，可以修改调试器的输出目录
 func AppDir() string {
 	dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 
@@ -26,7 +27,7 @@ func AppDir() string {
 			dir, _ = os.Getwd()
 		}
 
-		if strings.Contains(dir, "/tmp/GoLand") { //解决goland调试
+		if strings.Contains(dir, "/___go_build") || strings.Contains(dir, "/__debug") { //解决goland 和 vscode调试
 			dir, _ = os.Getwd()
 		}
 	}
