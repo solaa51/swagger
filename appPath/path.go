@@ -12,18 +12,21 @@ import (
 func AppDir() string {
 	dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 
-	//如果路径中 含有 /T/go-build 字符 则可认为是 go run 下执行的临时程序
 	switch runtime.GOOS {
 	case "windows":
-		if strings.Contains(dir, "\\Temp\\go-build") || strings.Contains(dir, "\\Temp\\GoLand") {
+		if strings.Contains(dir, "\\Temp\\go-build") {
 			dir, _ = os.Getwd()
 		}
-	case "linux":
-		if strings.Contains(dir, "/tmp/go-build") {
+
+		if strings.Contains(dir, "\\Temp\\GoLand") {
 			dir, _ = os.Getwd()
 		}
 	default:
-		if strings.Contains(dir, "/T/go-build") {
+		if strings.Contains(dir, "/go-build") { //解决go run xx.go 运行模式
+			dir, _ = os.Getwd()
+		}
+
+		if strings.Contains(dir, "/tmp/GoLand") { //解决goland调试
 			dir, _ = os.Getwd()
 		}
 	}
