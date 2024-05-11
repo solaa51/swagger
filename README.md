@@ -3,6 +3,11 @@ go-web框架
 
 ## 待完善计划表
 
+## 实现路由上保存调用次数：参考这个库https://github.com/alphadose/haxmap实现
+    该map仅适用于极少并发写入，大量并发修改
+
+    在router的定义中 增加一个字段 atomic.Int64
+
 ## 定时处理器
     处理器提供rpc和http服务 可用来管理定时任务，查看日志等
         自定义时间轮
