@@ -36,75 +36,80 @@ import (
 // ParseSimpleJson 解析简单json数据为map[string]string结构
 // 参考格式：{"a":"b","c":123,"d":[1,2,3],"e":["h","i","j"]}
 // 参考格式：{"a":"b,c","c":123,"d":[1,2,3],"e":["h","i","j"]}
+// 参考格式：{"role_id":165, "auto_operation":"{\"abc\":21212}"}
 func ParseSimpleJson(jsonByte *[]byte) (map[string]string, error) {
-	jsonStr := string(*jsonByte)
-	if jsonStr[0] != '{' || jsonStr[len(jsonStr)-1] != '}' {
-		return nil, errors.New("json格式错误")
-	}
+	jsonBtr := *jsonByte
+	l := len(jsonBtr)
+	var iis [][3]int
+	i := 1
 
-	var iis [][2]int
-	keys := 0
-
-	//特殊 :" -- "  :[ -- ]
-	for k, v := range jsonStr {
-		if k == 0 {
+	for i < l {
+		if jsonBtr[i] == '"' && jsonBtr[i+1] == ':' {
+			i += 2
 			continue
 		}
 
-		if v == '"' && jsonStr[k+1] == ':' {
-			keys++
+		if jsonBtr[i] == '"' && jsonBtr[i-1] == ':' {
+			ks, b := findStrEndIndex(jsonBtr[i+1:])
+			if ks == -1 {
+				return nil, errors.New("json格式错误")
+			}
+			iis = append(iis, [3]int{i, i + ks + 1, b})
+			i += ks + 2
+			continue
 		}
 
-		if v == '"' && jsonStr[k-1] == ':' {
-			iis = append(iis, [2]int{
-				k, k + strings.Index(jsonStr[k+1:], `"`) + 1,
-			})
+		if jsonBtr[i] == '[' && jsonBtr[i-1] == ':' {
+			ks := bytes.Index(jsonBtr[i+1:], []byte(`]`))
+			if ks == -1 {
+				return nil, errors.New("json格式错误")
+			}
+			iis = append(iis, [3]int{i, i + ks + 1, 0})
+			i += ks + 2
+			continue
 		}
 
-		if v == '[' && jsonStr[k-1] == ':' {
-			iis = append(iis, [2]int{
-				k, k + strings.Index(jsonStr[k+1:], `]`) + 1,
-			})
-		}
+		i++
 	}
 
 	var snew bytes.Buffer
-	snew.Grow(len(jsonStr))
+	snew.Grow(l)
 	tiStrs := make([]string, len(iis))
 
 	if len(iis) == 0 {
-		snew.WriteString(jsonStr[1 : len(jsonStr)-1])
+		snew.Write(jsonBtr[1 : l-1])
 	} else {
+		prevEnd := 1
 		for k, v := range iis {
-			tiStrs[k] = jsonStr[v[0]+1 : v[1]]
-
-			if k == 0 {
-				snew.WriteString(jsonStr[1:v[0]] + "{{}}")
+			strValue := string(jsonBtr[v[0]+1 : v[1]])
+			if v[2] == 0 {
+				strValue = strings.ReplaceAll(strValue, `"`, "")
+			} else {
+				strValue = strings.ReplaceAll(strValue, `\"`, `"`)
 			}
-
-			if k > 0 {
-				snew.WriteString(jsonStr[iis[k-1][1]+1:v[0]] + "{{}}")
-			}
-
-			if k == len(iis)-1 {
-				snew.WriteString(jsonStr[v[1]+1 : len(jsonStr)-1])
-			}
+			tiStrs[k] = strings.TrimSpace(strValue)
+			snew.Write(jsonBtr[prevEnd:v[0]])
+			snew.WriteString("{{}}")
+			prevEnd = v[1] + 1
 		}
+		snew.Write(jsonBtr[prevEnd : l-1])
 	}
 
 	arr := make(map[string]string)
-
 	sl := strings.Split(snew.String(), ",")
 	rPIndex := 0
 	for _, v := range sl {
 		if v == "" {
 			continue
 		}
-		vv := strings.Split(v, `:`)
-		key := strings.TrimSpace(strings.ReplaceAll(strings.TrimSpace(vv[0]), `"`, ""))
+		vv := strings.SplitN(v, `:`, 2)
+		if len(vv) != 2 {
+			return nil, errors.New("json格式错误")
+		}
+		key := strings.TrimSpace(strings.ReplaceAll(vv[0], `"`, ""))
 		val := strings.TrimSpace(vv[1])
 		if val == "{{}}" {
-			arr[key] = strings.TrimSpace(strings.ReplaceAll(tiStrs[rPIndex], `"`, ""))
+			arr[key] = tiStrs[rPIndex]
 			rPIndex++
 		} else {
 			arr[key] = val
@@ -112,6 +117,26 @@ func ParseSimpleJson(jsonByte *[]byte) (map[string]string, error) {
 	}
 
 	return arr, nil
+}
+
+// 返回位置和 是否包含转义符 0和1为int类型一致方便处理
+func findStrEndIndex(sb []byte) (kk int, b int) {
+	kk = -1
+	for k := range sb {
+		if sb[k] == '"' {
+			if k > 0 {
+				if sb[k-1] == '\\' {
+					b = 1
+					continue
+				}
+			}
+
+			kk = k
+			break
+		}
+	}
+
+	return
 }
 
 // CheckCustomStructPtrExport 检测自定义struct指针参数并且可导出

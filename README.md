@@ -3,9 +3,7 @@ go-web框架
 
 ## 待完善计划表
 
-## json解析性能提升 增加支持 json中包含json格式字符串 [待正式使用后合并代码]
-    减少了循环次数，优化了buffer赋值
-    性能提升0.8微秒  略快于官方json.Unmarshal 0.5微秒
+
 
 ## 实现路由上保存调用次数：参考这个库https://github.com/alphadose/haxmap实现
     该map仅适用于极少并发写入，大量并发修改
@@ -71,6 +69,10 @@ go-web框架
 
     生成客户端 服务端 及调用结构
     protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative hello.proto
+
+## json解析性能提升 增加支持 json中包含json格式字符串 [完成]
+    减少了循环次数，优化了buffer赋值
+    性能提升0.8微秒  略快于官方json.Unmarshal 0.5微秒
 
 ## 根据信号对程序进行 性能采样 [弃用]
     根据信号对程序进行 打印堆栈信息
