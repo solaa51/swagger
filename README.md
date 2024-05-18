@@ -3,6 +3,10 @@ go-web框架
 
 ## 待完善计划表
 
+## json解析性能提升 增加支持 json中包含json格式字符串 [待正式使用后合并代码]
+    减少了循环次数，优化了buffer赋值
+    性能提升0.8微秒  略快于官方json.Unmarshal 0.5微秒
+
 ## 实现路由上保存调用次数：参考这个库https://github.com/alphadose/haxmap实现
     该map仅适用于极少并发写入，大量并发修改
 
