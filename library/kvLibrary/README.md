@@ -4,6 +4,12 @@ key value map高并发读写库
 
 ## 不分片 少量数据使用
 ```go
+package main
+func main() {
+	iKv := kvLibrary.NewKVMap[int, int](0)
+	iKv.Set(1, 1)
+	fmt.Println(iKv.Get(1))
+}
 ```
 
 ## 分片调用

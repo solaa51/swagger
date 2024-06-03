@@ -4,7 +4,9 @@
 ### 未经实际使用
 
 ```go
-    stk := NewAtomicStack[int]()
+package main
+func main() {
+	stk := NewAtomicStack[int]()
 	go stk.Push(1)
 	go stk.Push(2)
 	go stk.Push(3)
@@ -17,4 +19,5 @@
 	fmt.Println(*stk.Pop())
 	fmt.Println(*stk.Pop())
 	fmt.Println(*stk.Pop())
+}
 ```
