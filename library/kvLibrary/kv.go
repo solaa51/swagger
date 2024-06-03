@@ -1,6 +1,9 @@
 package kvLibrary
 
-import "sync/atomic"
+import (
+	"maps"
+	"sync/atomic"
+)
 
 //kv并发读写库
 
@@ -13,6 +16,18 @@ type KVMap[K comparable, V any] struct {
 func NewKVMap[K comparable, V any](cap int) *KVMap[K, V] {
 	return &KVMap[K, V]{
 		kv: make(map[K]V, cap),
+	}
+}
+
+// Items 获取所有数据 复制后返回
+func (m *KVMap[K, V]) Items() map[K]V {
+	for {
+		if m.state.CompareAndSwap(0, 2) {
+			p := make(map[K]V, m.count.Load())
+			maps.Copy(p, m.kv)
+			m.state.CompareAndSwap(2, 0)
+			return p
+		}
 	}
 }
 
