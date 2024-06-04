@@ -1,7 +1,9 @@
 package kvLibrary
 
 import (
+	"fmt"
 	"github.com/solaa51/swagger/cFunc"
+	"maps"
 	"runtime"
 )
 
@@ -64,6 +66,17 @@ func (s *ShardKV[K, V]) Len() int {
 	}
 
 	return l
+}
+
+func (s *ShardKV[K, V]) Items() map[K]V {
+	m := make(map[K]V)
+	for i := 0; i < s.shardNum; i++ {
+		maps.Copy(m, s.shard[i].Items())
+
+		fmt.Println(i, s.shard[i].Len())
+	}
+
+	return m
 }
 
 // 分局key计算分片数

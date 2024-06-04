@@ -1,6 +1,7 @@
 package kvLibrary
 
 import (
+	"fmt"
 	"maps"
 	"sync/atomic"
 )
@@ -29,6 +30,25 @@ func (m *KVMap[K, V]) Items() map[K]V {
 			return p
 		}
 	}
+}
+
+// SetOnce 仅允许单次写入
+func (m *KVMap[K, V]) SetOnce(k K, v V) bool {
+	b := false
+	for {
+		if m.state.CompareAndSwap(0, 1) {
+			if _, ok := m.kv[k]; !ok {
+				m.kv[k] = v
+				m.count.Add(1)
+				b = true
+				fmt.Println("kv库写入成功", k, v)
+			}
+			m.state.CompareAndSwap(1, 0)
+			break
+		}
+	}
+
+	return b
 }
 
 func (m *KVMap[K, V]) Set(k K, v V) {
