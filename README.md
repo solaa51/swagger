@@ -3,8 +3,6 @@ go-web框架
 
 ## 待完善计划表
 
-
-
 ## 实现路由上保存调用次数：参考这个库https://github.com/alphadose/haxmap实现
     该map仅适用于极少并发写入，大量并发修改
 
@@ -70,6 +68,12 @@ go-web框架
     生成客户端 服务端 及调用结构
     protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative hello.proto
 
+## 高性能并发安全kv库 [待项目中实践]
+    kvLibrary
+
+## 栈操作库 [未经项目实践]
+    atomicStack
+
 ## json解析性能提升 增加支持 json中包含json格式字符串 [完成]
     减少了循环次数，优化了buffer赋值
     性能提升0.8微秒  略快于官方json.Unmarshal 0.5微秒
@@ -78,9 +82,9 @@ go-web框架
     根据信号对程序进行 打印堆栈信息
     在默认支持http_pprof的情况下，该方案没啥优势
 
-## 重构入口层，独立出appServer用来处理信号和资源回收 完成
+## 重构入口层，独立出appServer用来处理信号和资源回收 [完成]
 
-## 路由处理 - 改为链表 匹配性能提升100倍 整体提升没多大[100µs] 完成
+## 路由处理 - 改为链表 匹配性能提升100倍 整体提升没多大[100µs] [完成]
     将正则规则转换为字符串处理
     服务启动时 处理完所有路由规则 并将其注册到服务中
     利用链表存储路由规则
