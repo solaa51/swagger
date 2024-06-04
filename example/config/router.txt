@@ -1,0 +1,3 @@
+/welcome/index ==> welcome/index
+/gameApi/gameMall/index ==> gameMall/index
+/api/auth/login ==> Auth.Login

@@ -1,0 +1,5 @@
+
+[2024-04-22 15:58:08] /Users/lisuliang/data/golang/src/solaa51/swagger/orm/orm.go:293
+	[2.390ms] [rows:1] SELECT * FROM information_schema.tables WHERE table_schema = 'admin' AND table_name = 'sys_admin'
+[2024-04-22 15:58:08] /Users/lisuliang/data/golang/src/solaa51/swagger/orm/orm.go:318
+	[1.622ms] [rows:12] SELECT * FROM information_schema.columns WHERE table_schema = 'admin' AND table_name = 'sys_admin' ORDER BY ordinal_position ASC

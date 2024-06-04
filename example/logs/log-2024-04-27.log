@@ -1,0 +1,13 @@
+{"time":"2024-04-27 10:30:56.463779","level":"ERROR","msg":"连接redis失败:dial tcp [::1]:6379: connect: connection refused[[]]","source":{"function":"github.com/solaa51/swagger/log/bufWriter.Fatal","file":"log.go","line":147}}
+{"time":"2024-04-27 16:49:03.176943","level":"ERROR","msg":"连接redis失败:dial tcp 127.0.0.1:6379: connect: connection refused[[]]","source":{"function":"github.com/solaa51/swagger/log/bufWriter.Fatal","file":"log.go","line":147}}
+{"time":"2024-04-27 16:49:36.834940","level":"WARN","msg":"启动服务，监听地址为:[:9999 进程ID为: 13559]"}
+{"time":"2024-04-27 16:49:48.391849","level":"INFO","msg":"[status=404 takeTime=18.695µs structFuncName= requestId=1784142894135775232 method=GET url=/ ip=::1 user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36]"}
+{"time":"2024-04-27 16:49:48.486818","level":"INFO","msg":"[status=404 takeTime=7.041µs structFuncName= requestId=1784142894534234112 method=GET url=/favicon.ico ip=::1 user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36]"}
+{"time":"2024-04-27 16:50:01.565070","level":"INFO","msg":"[status=0 takeTime=43.514µs structFuncName=Auth.Login requestId=1784142949391536128 method=GET url=/api/auth/login ip=::1 user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36]"}
+{"time":"2024-04-27 17:30:29.562095","level":"WARN","msg":"启动服务，监听地址为:[:9999 进程ID为: 14965]"}
+{"time":"2024-04-27 17:30:31.675175","level":"INFO","msg":"[status=0 takeTime=53.326µs structFuncName=Auth.Login requestId=1784153142011629568 method=GET url=/api/auth/login ip=::1 user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36]"}
+{"time":"2024-04-27 17:42:21.964625","level":"WARN","msg":"启动服务，监听地址为:[:9999 进程ID为: 15575]"}
+{"time":"2024-04-27 18:10:35.317523","level":"WARN","msg":"启动服务，监听地址为:[:9999 进程ID为: 18694]"}
+{"time":"2024-04-27 18:53:14.341190","level":"WARN","msg":"启动服务，监听地址为:[:9999 进程ID为: 19979]"}
+{"time":"2024-04-27 18:54:15.789470","level":"WARN","msg":"启动服务，监听地址为:[:9999 进程ID为: 20302]"}
+{"time":"2024-04-27 18:56:35.584247","level":"WARN","msg":"启动服务，监听地址为:[:9999 进程ID为: 20439]"}
