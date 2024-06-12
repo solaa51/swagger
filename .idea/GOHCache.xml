@@ -85,7 +85,6 @@
         <entry key="KVMap">
           <value>
             <set>
-              <option value="file://$USER_HOME$/Desktop/main/kvLibrary/kv.go" />
               <option value="file://$PROJECT_DIR$/library/kvLibrary/kv.go" />
             </set>
           </value>
@@ -94,20 +93,6 @@
           <value>
             <set>
               <option value="file://$PROJECT_DIR$/limiter/keyRateLimiter.go" />
-            </set>
-          </value>
-        </entry>
-        <entry key="LFNode">
-          <value>
-            <set>
-              <option value="file://$PROJECT_DIR$/library/atomicStack/stack.go" />
-            </set>
-          </value>
-        </entry>
-        <entry key="LFStack">
-          <value>
-            <set>
-              <option value="file://$PROJECT_DIR$/library/atomicStack/stack.go" />
             </set>
           </value>
         </entry>
@@ -273,20 +258,6 @@
             </set>
           </value>
         </entry>
-        <entry key="mission">
-          <value>
-            <set>
-              <option value="file://$USER_HOME$/Desktop/main/main.go" />
-            </set>
-          </value>
-        </entry>
-        <entry key="missionGroup">
-          <value>
-            <set>
-              <option value="file://$USER_HOME$/Desktop/main/main.go" />
-            </set>
-          </value>
-        </entry>
         <entry key="mm">
           <value>
             <set>
@@ -298,13 +269,6 @@
           <value>
             <set>
               <option value="file://$PROJECT_DIR$/library/atomicStack/stack.go" />
-            </set>
-          </value>
-        </entry>
-        <entry key="perShard">
-          <value>
-            <set>
-              <option value="file://$USER_HOME$/Desktop/main/main.go" />
             </set>
           </value>
         </entry>
@@ -322,13 +286,6 @@
             </set>
           </value>
         </entry>
-        <entry key="sdf">
-          <value>
-            <set>
-              <option value="file://$USER_HOME$/Desktop/main/main.go" />
-            </set>
-          </value>
-        </entry>
         <entry key="watchFile">
           <value>
             <set>
@@ -340,40 +297,6 @@
     </option>
     <option name="scannedPathMapping">
       <map>
-        <entry key="file://$USER_HOME$/Desktop/main/kvLibrary/kv.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1717411766177" />
-              <option name="schema">
-                <list>
-                  <option value="KVMap" />
-                </list>
-              </option>
-            </ScannedPath>
-          </value>
-        </entry>
-        <entry key="file://$USER_HOME$/Desktop/main/main.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1717411807984" />
-              <option name="schema">
-                <list>
-                  <option value="sdf" />
-                  <option value="perShard" />
-                  <option value="mission" />
-                  <option value="missionGroup" />
-                </list>
-              </option>
-            </ScannedPath>
-          </value>
-        </entry>
-        <entry key="file://$PROJECT_DIR$/../../poyou/mugame_admin_api/a.go">
-          <value>
-            <ScannedPath>
-              <option name="lastModified" value="1717409452736" />
-            </ScannedPath>
-          </value>
-        </entry>
         <entry key="file://$PROJECT_DIR$/a.go">
           <value>
             <ScannedPath>
@@ -823,17 +746,12 @@
         <entry key="http" value="Http" />
         <entry key="key_rate_limiter" value="KeyRateLimiter" />
         <entry key="kv_map" value="KVMap" />
-        <entry key="lf_node" value="LFNode" />
-        <entry key="lf_stack" value="LFStack" />
         <entry key="limiter" value="Limiter" />
-        <entry key="mission" value="mission" />
-        <entry key="mission_group" value="missionGroup" />
         <entry key="mm" value="mm" />
         <entry key="nats" value="Nats" />
         <entry key="node" value="Node" />
         <entry key="node_data" value="nodeData" />
         <entry key="param" value="Param" />
-        <entry key="per_shard" value="perShard" />
         <entry key="pprof" value="Pprof" />
         <entry key="px" value="px" />
         <entry key="rate_config" value="RateConfig" />
@@ -841,7 +759,6 @@
         <entry key="result" value="Result" />
         <entry key="route_parse" value="RouteParse" />
         <entry key="router" value="Router" />
-        <entry key="sdf" value="sdf" />
         <entry key="segment" value="Segment" />
         <entry key="shard_kv" value="ShardKV" />
         <entry key="ssh_client" value="SshClient" />
@@ -852,6 +769,6 @@
         <entry key="watch_file" value="watchFile" />
       </map>
     </option>
-    <option name="lastTimeChecked" value="1717385066331" />
+    <option name="lastTimeChecked" value="1718160464747" />
   </component>
 </project>

@@ -1,3 +1,0 @@
-
-[2024-04-23 14:37:49] /Users/lisuliang/data/golang/src/solaa51/swagger/example/controller/auth.go:30
-	[16.118ms] [rows:0] SELECT * FROM `sys_admin` WHERE username = 'dsfdsf' AND is_del = 0
