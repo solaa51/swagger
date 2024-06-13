@@ -297,6 +297,13 @@
     </option>
     <option name="scannedPathMapping">
       <map>
+        <entry key="file://$PROJECT_DIR$/../../poyou/mugame_admin_api/internal/appPath/path.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1718271060475" />
+            </ScannedPath>
+          </value>
+        </entry>
         <entry key="file://$PROJECT_DIR$/a.go">
           <value>
             <ScannedPath>
@@ -319,7 +326,7 @@
         <entry key="file://$PROJECT_DIR$/appConfig/config.go">
           <value>
             <ScannedPath>
-              <option name="lastModified" value="1713768086518" />
+              <option name="lastModified" value="1718271212732" />
               <option name="schema">
                 <list>
                   <option value="Http" />
@@ -334,14 +341,14 @@
         <entry key="file://$PROJECT_DIR$/appPath/path.go">
           <value>
             <ScannedPath>
-              <option name="lastModified" value="1715157839334" />
+              <option name="lastModified" value="1718271076982" />
             </ScannedPath>
           </value>
         </entry>
         <entry key="file://$PROJECT_DIR$/appServer/httpServer.go">
           <value>
             <ScannedPath>
-              <option name="lastModified" value="1713779801316" />
+              <option name="lastModified" value="1718271333745" />
               <option name="schema">
                 <list>
                   <option value="appServer" />
@@ -393,6 +400,13 @@
                   <option value="curUserRootKey" />
                 </list>
               </option>
+            </ScannedPath>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/configFiles/configFiels.go">
+          <value>
+            <ScannedPath>
+              <option name="lastModified" value="1718270995586" />
             </ScannedPath>
           </value>
         </entry>
@@ -531,7 +545,7 @@
         <entry key="file://$PROJECT_DIR$/library/nats/nats.go">
           <value>
             <ScannedPath>
-              <option name="lastModified" value="1712555064468" />
+              <option name="lastModified" value="1718271455107" />
               <option name="schema">
                 <list>
                   <option value="Nats" />
@@ -544,7 +558,7 @@
         <entry key="file://$PROJECT_DIR$/library/redis/redis.go">
           <value>
             <ScannedPath>
-              <option name="lastModified" value="1712555255002" />
+              <option name="lastModified" value="1718271398816" />
               <option name="schema">
                 <list>
                   <option value="Client" />
@@ -631,7 +645,7 @@
         <entry key="file://$PROJECT_DIR$/orm/orm.go">
           <value>
             <ScannedPath>
-              <option name="lastModified" value="1714966243463" />
+              <option name="lastModified" value="1718271023487" />
               <option name="schema">
                 <list>
                   <option value="DbConf" />
@@ -769,6 +783,6 @@
         <entry key="watch_file" value="watchFile" />
       </map>
     </option>
-    <option name="lastTimeChecked" value="1718160464747" />
+    <option name="lastTimeChecked" value="1718270933920" />
   </component>
 </project>

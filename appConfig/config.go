@@ -3,6 +3,7 @@ package appConfig
 import (
 	"github.com/solaa51/swagger/appPath"
 	"github.com/solaa51/swagger/cFunc"
+	"github.com/solaa51/swagger/configFiles"
 	"github.com/solaa51/swagger/log/bufWriter"
 	"github.com/solaa51/swagger/watchConfig"
 	"gopkg.in/yaml.v3"
@@ -128,22 +129,23 @@ func (c *Config) check() {
 			bufWriter.Fatal("请为https服务配置证书:httpsKey和httpsPem")
 		}
 
-		if _, err := os.Stat(appPath.ConfigDir() + c.Http.HTTPSKEY); err != nil {
+		if _, err := configFiles.GetConfigFile(c.Http.HTTPSKEY); err != nil {
 			bufWriter.Fatal("请为https服务配置证书:httpsKey")
 		}
 
-		if _, err := os.Stat(appPath.ConfigDir() + c.Http.HTTPSPEM); err != nil {
+		if _, err := configFiles.GetConfigFile(c.Http.HTTPSPEM); err != nil {
 			bufWriter.Fatal("请为https服务配置证书:httpsPem")
 		}
 
-		c.Http.HTTPSKEY = appPath.ConfigDir() + c.Http.HTTPSKEY
-		c.Http.HTTPSPEM = appPath.ConfigDir() + c.Http.HTTPSPEM
+		// 兼容embed后 这个地址就无效了
+		//c.Http.HTTPSKEY = appPath.ConfigDir() + c.Http.HTTPSKEY
+		//c.Http.HTTPSPEM = appPath.ConfigDir() + c.Http.HTTPSPEM
 	}
 }
 
 func parseConfigFile() (*Config, error) {
 	c := &Config{}
-	f, err := os.ReadFile(appPath.ConfigDir() + "app.yaml")
+	f, err := configFiles.GetConfigFile("app.yaml")
 	if err != nil {
 		bufWriter.Warn("未配置" + appPath.ConfigDir() + "app.yaml")
 	} else {
@@ -179,7 +181,7 @@ func newConfig() *Config {
 func init() {
 	config = newConfig()
 
-	ch, _ := watchConfig.AddWatch(appPath.ConfigDir() + "app.yaml")
+	ch, _ := watchConfig.AddWatch(configFiles.GetConfigPath("app.yaml"))
 	go func() {
 		for {
 			select {

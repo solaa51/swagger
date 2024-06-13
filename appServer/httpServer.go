@@ -80,6 +80,7 @@ func start(restart bool) {
 	// 启动http服务监听
 	go func() {
 		if appConfig.Info().Http.HTTPS {
+			// TODO 兼容embed后 这里不能使用地址，需要改为直接读取内容
 			err = server.ServeTLS(ln, appConfig.Info().Http.HTTPSPEM, appConfig.Info().Http.HTTPSKEY)
 		} else {
 			err = server.Serve(ln)

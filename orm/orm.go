@@ -8,6 +8,7 @@ import (
 	mysql2 "github.com/go-sql-driver/mysql"
 	"github.com/solaa51/swagger/appPath"
 	"github.com/solaa51/swagger/cFunc"
+	"github.com/solaa51/swagger/configFiles"
 	"github.com/solaa51/swagger/log/bufWriter"
 	"github.com/solaa51/swagger/watchConfig"
 	"golang.org/x/crypto/ssh"
@@ -69,16 +70,10 @@ var dbConfigFile string
 var dbConfigJson string
 
 func init() {
-	configDir := appPath.ConfigDir()
-
-	dbConfigFile = configDir + "database.yaml"
-	if _, err := os.Stat(dbConfigFile); err != nil {
-		bufWriter.Fatal("没找到数据库配置文件", dbConfigFile, err.Error())
-		return
-	}
+	dbConfigFile = configFiles.GetConfigPath("database.yaml")
 
 	//初始化 数据库连接池
-	dbInstances = make(map[string]*dbInstance, 0)
+	dbInstances = make(map[string]*dbInstance)
 
 	//实例化数据库连接
 	connectDb()
@@ -171,7 +166,7 @@ func LinkDb(conf DbConf) (*gorm.DB, error) {
 func connectDb() {
 	configParse := &DbConfigParse{}
 
-	f, err := os.ReadFile(dbConfigFile)
+	f, err := configFiles.GetConfigFile("database.yaml")
 	if err != nil {
 		bufWriter.Error("解析数据库配置文件出错", dbConfigFile, err)
 		return

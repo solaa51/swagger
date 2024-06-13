@@ -6,10 +6,10 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/solaa51/swagger/app"
 	"github.com/solaa51/swagger/appPath"
+	"github.com/solaa51/swagger/configFiles"
 	"github.com/solaa51/swagger/log/bufWriter"
 	"github.com/solaa51/swagger/watchConfig"
 	"gopkg.in/yaml.v3"
-	"os"
 	"sync"
 	"time"
 )
@@ -31,9 +31,29 @@ func (c *Client) Get(key string) (string, bool, error) {
 	return val, true, nil
 }
 
+// GetDel Get bool表示是否存在该key
+func (c *Client) GetDel(key string) (string, bool, error) {
+	val, err := c.Client.GetDel(context.Background(), key).Result()
+
+	if errors.Is(err, redis.Nil) {
+		return "", false, nil
+	} else if err != nil {
+		return "", false, err
+	}
+
+	return val, true, nil
+}
+
 // Set 0-second表示为没有过期时间
 func (c *Client) Set(key string, value string, second int) error {
 	return c.Client.Set(context.Background(), key, value, time.Second*time.Duration(second)).Err()
+}
+
+func (c *Client) Incr(key string) (int64, error) {
+	return c.Client.Incr(context.Background(), key).Result()
+}
+func (c *Client) IncrBy(key string, inc int64) (int64, error) {
+	return c.Client.IncrBy(context.Background(), key, inc).Result()
 }
 
 func (c *Client) IsExists(key string) bool {
@@ -120,6 +140,7 @@ var defaultClient *Client
 var Conf *Config     //redis配置信息
 var keyPrefix string //前缀
 var wg sync.Mutex
+var err error
 
 // Config redis配置文件结构
 type Config struct {
@@ -132,7 +153,7 @@ type Config struct {
 }
 
 func newConfig() (*Config, error) {
-	f, err := os.ReadFile(appPath.ConfigDir() + "redis.yaml")
+	f, err := configFiles.GetConfigFile("redis.yaml")
 	if err != nil {
 		return nil, errors.New("无法读取redis配置文件")
 	}
@@ -147,7 +168,7 @@ func newConfig() (*Config, error) {
 }
 
 func init() {
-	Conf, err := newConfig()
+	Conf, err = newConfig()
 	if err != nil {
 		bufWriter.Fatal(err.Error())
 	}
@@ -158,7 +179,7 @@ func init() {
 		bufWriter.Fatal(err.Error())
 	}
 
-	ch, _ := watchConfig.AddWatch(appPath.ConfigDir() + "redis.yaml")
+	ch, _ := watchConfig.AddWatch(configFiles.GetConfigPath("redis.yaml"))
 	go func() {
 		for {
 			select {
@@ -256,7 +277,7 @@ func NewClient(host, port, name, pass string, db int) (*Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := cc.Ping(ctx).Result()
+	_, err = cc.Ping(ctx).Result()
 	if err != nil {
 		return nil, errors.New("连接redis失败:" + err.Error())
 	}

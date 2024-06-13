@@ -6,16 +6,16 @@ import (
 	ants2 "github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	"github.com/solaa51/swagger/app"
-	"github.com/solaa51/swagger/appPath"
+	"github.com/solaa51/swagger/configFiles"
 	"github.com/solaa51/swagger/log/bufWriter"
 	"gopkg.in/yaml.v3"
-	"os"
 	"time"
 )
 
 // nats 调用 发送消息 和 消费者
 var defaultNats *Nats
 var Conf *Config
+var err error
 
 func AnswerConsumer(subject string, fn func(subject string, body []byte) []byte) error {
 	return defaultNats.AnswerConsumer(subject, fn)
@@ -100,7 +100,7 @@ type Config struct {
 }
 
 func newConfig() (*Config, error) {
-	f, err := os.ReadFile(appPath.ConfigDir() + "nats.yaml")
+	f, err := configFiles.GetConfigFile("nats.yaml")
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func NewClient(host, port string) (*Nats, error) {
 }
 
 func init() {
-	Conf, err := newConfig()
+	Conf, err = newConfig()
 	if err != nil {
 		bufWriter.Fatal("无法解析配置文件", err.Error())
 	}

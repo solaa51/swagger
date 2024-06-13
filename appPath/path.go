@@ -1,7 +1,6 @@
 package appPath
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -53,10 +52,10 @@ func ConfigDir() string {
 		}
 	}
 
-	err := os.Mkdir(appDir+configDirName, 0755)
-	if err != nil {
-		log.Fatal("创建配置文件目录失败：", appDir+configDirName, err.Error())
-	}
+	//err := os.Mkdir(appDir+configDirName, 0755)
+	//if err != nil {
+	//	log.Fatal("创建配置文件目录失败：", appDir+configDirName, err.Error())
+	//}
 
 	return appDir + configDirName + string(os.PathSeparator)
 }
