@@ -2,10 +2,12 @@ package appServer
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"github.com/solaa51/swagger/app"
 	"github.com/solaa51/swagger/appConfig"
 	"github.com/solaa51/swagger/cFunc"
+	"github.com/solaa51/swagger/configFiles"
 	"github.com/solaa51/swagger/handle"
 	"github.com/solaa51/swagger/log/bufWriter"
 	router "github.com/solaa51/swagger/routerV2"
@@ -15,6 +17,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -80,11 +83,31 @@ func start(restart bool) {
 	// 启动http服务监听
 	go func() {
 		if appConfig.Info().Http.HTTPS {
-			// TODO 兼容embed后 这里不能使用地址，需要改为直接读取内容
-			err = server.ServeTLS(ln, appConfig.Info().Http.HTTPSPEM, appConfig.Info().Http.HTTPSKEY)
-		} else {
-			err = server.Serve(ln)
+			//兼容embed后 这里不能使用地址，需要改为直接读取内容
+			var config *tls.Config
+			if server.TLSConfig == nil {
+				config = &tls.Config{}
+			} else {
+				config = server.TLSConfig.Clone()
+			}
+			if !slices.Contains(config.NextProtos, "http/1.1") {
+				config.NextProtos = append(config.NextProtos, "http/1.1")
+			}
+
+			config.Certificates = make([]tls.Certificate, 1)
+			certFile, _ := configFiles.GetConfigFile(appConfig.Info().Http.HTTPSPEM)
+			keyFile, _ := configFiles.GetConfigFile(appConfig.Info().Http.HTTPSKEY)
+			config.Certificates[0], err = tls.X509KeyPair(certFile, keyFile)
+			if err != nil {
+				bufWriter.Fatal("证书文件解析失败", err)
+			}
+
+			ln = tls.NewListener(ln, config)
+
+			//err = server.ServeTLS(ln, appConfig.Info().Http.HTTPSPEM, appConfig.Info().Http.HTTPSKEY)
 		}
+
+		err = server.Serve(ln)
 
 		bufWriter.Fatal("服务启动失败或已被关闭", err, server.Addr, os.Getpid())
 	}()
