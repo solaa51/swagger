@@ -68,8 +68,9 @@ go-web框架
     生成客户端 服务端 及调用结构
     protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative hello.proto
 
-## 高性能并发安全kv库 [待项目中实践]
-    kvLibrary
+## atomic并发安全kv库 [待项目中实践] 
+    [当前性能太辣鸡]
+    kvLibrary 官方syncMap性能 21620 ns/op 以这个为基准 需要超越这个 才有意义
 
 ## 栈操作库 [未经项目实践]
     atomicStack
