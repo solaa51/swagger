@@ -33,12 +33,52 @@ import (
 	"unsafe"
 )
 
+// ParseJsonArrayObject 解析json数组对象到 [][]byte
+// 内部对象可继续交给 ParseSimpleJson 解析
+func ParseJsonArrayObject(str []byte) ([][]byte, error) {
+	if !json.Valid(str) || len(str) < 4 {
+		return nil, errors.New("invalid json array object")
+	}
+
+	if str[0] != '[' || str[len(str)-1] != ']' {
+		return nil, errors.New("invalid json array")
+	}
+
+	if str[1] != '{' || str[len(str)-2] != '}' {
+		return nil, errors.New("invalid json array object")
+	}
+
+	var arr [][]byte
+	var j = 0
+	var pos = 0
+	for i := 1; i < len(str)-1; i++ {
+		if str[i] == '{' {
+			if j == 0 {
+				pos = i
+			}
+			j++
+		}
+		if str[i] == '}' {
+			j--
+			if j == 0 {
+				arr = append(arr, str[pos:i+1])
+			}
+		}
+	}
+	return arr, nil
+}
+
 // ParseSimpleJson 解析简单json数据为map[string]string结构
 // 参考格式：{"a":"b","c":123,"d":[1,2,3],"e":["h","i","j"]}
 // 参考格式：{"a":"b,c","c":123,"d":[1,2,3],"e":["h","i","j"]}
 // 参考格式：{"role_id":165, "auto_operation":"{\"abc\":21212}"}
 func ParseSimpleJson(jsonByte *[]byte) (map[string]string, error) {
 	jsonBtr := *jsonByte
+
+	if !json.Valid(jsonBtr) {
+		return nil, errors.New("json格式错误")
+	}
+
 	l := len(jsonBtr)
 	var iis [][3]int
 	i := 1

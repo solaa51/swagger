@@ -6,6 +6,7 @@ import (
 	"github.com/solaa51/swagger/context"
 	"github.com/solaa51/swagger/example/model"
 	"github.com/solaa51/swagger/library/redis"
+	"github.com/solaa51/swagger/library/valid"
 	"github.com/solaa51/swagger/snowflake"
 	"strconv"
 )
@@ -15,9 +16,9 @@ import (
 type Auth struct{}
 
 func (a *Auth) Login(ctx *context.Context) {
-	data, err := ctx.CheckField([]*context.CheckField{
-		{Name: "username", Desc: "用户名", CheckType: context.CheckString, Request: true, Min: 5, Max: 20, Reg: "^[a-zA-Z][a-zA-Z0-9]{4,31}$"},
-		{Name: "password", Desc: "密码", CheckType: context.CheckString, Request: true, Min: 4, Max: 20},
+	data, err := ctx.CheckField([]*valid.Regulation{
+		{Name: "username", Desc: "用户名", CheckType: valid.String, Required: true, Min: 5, Max: 20, Reg: "^[a-zA-Z][a-zA-Z0-9]{4,31}$"},
+		{Name: "password", Desc: "密码", CheckType: valid.String, Required: true, Min: 4, Max: 20},
 	})
 	if err != nil {
 		ctx.RetCode = 3000
