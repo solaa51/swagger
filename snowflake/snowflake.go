@@ -126,7 +126,7 @@ func IDInt64() int64 {
 // ServerId 根据生成的snowId计算出机器ID
 func ServerId(snowId string) int64 {
 	sidInt, _ := strconv.ParseInt(snowId, 10, 64)
-	nodeMax := int64(-1 ^ (-1 << nodeBits)) // 10为则为 1023
+	nodeMax := int64(-1 ^ (-1 << nodeBits)) // 10位则为 1023
 	snow := sidInt >> stepBits              //右移12位 暴露出 码的前 1+41+10位
 	return snow & nodeMax                   //位与 过滤掉前面的，只留下后面10位数字
 }
