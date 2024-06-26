@@ -3,7 +3,6 @@ package cFunc
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"crypto/md5"
 	"crypto/sha256"
 	"encoding/hex"
@@ -11,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/solaa51/swagger/appPath"
-	"golang.org/x/sync/singleflight"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
 	"hash/crc32"
@@ -409,44 +407,6 @@ func Md5T[T CanTypes](in T) string {
 	b := m.Sum([]byte(time.Now().String()))
 	return hex.EncodeToString(b)
 }*/
-
-var g singleflight.Group
-
-// SingleFlight 防止缓存击穿
-//
-// 适用场景: key的生成需要谨慎
-//
-// 1.单机模式下的生成缓存；如果分布式模式下，请使用其他方式
-//
-// 2.将多个请求合并成一个请求,比如post短时多次提交；get同一内容
-//
-// eg: ret, err := cFunc.SingleFlight(context.Background(), key, jisuan)
-//
-// eg: fmt.Println(ret.(int64), err)
-//
-// eg: func jisuan(ctx context.Context) (any, error) {
-//
-// eg:	return time.Now().Unix(), nil
-//
-// eg: }
-func SingleFlight(ctx context.Context, key string, method func(context.Context) (any, error)) (any, error) {
-	result := g.DoChan(key, func() (interface{}, error) {
-		return method(ctx)
-	})
-
-	//防止 一个出错，全部出错
-	go func() {
-		time.Sleep(100 * time.Millisecond)
-		g.Forget(key)
-	}()
-
-	select {
-	case r := <-result:
-		return r.Val, r.Err
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	}
-}
 
 // ConvertStr 将数据库中的表字段 转换为go中使用的名称
 func ConvertStr(col string) string {

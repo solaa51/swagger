@@ -4,8 +4,8 @@ USER = $(shell id -u -n)
 DATE = $(shell date '+%Y-%m-%d %H:%M:%S')
 
 .PHONY: build
-VERSION = v1.1.5
-REMARK = "新增kv库"
+VERSION = v1.1.6
+REMARK = "singleFlight独立成新的库，方便分组调用"
 build:
 	git add .
 	git commit -m $(REMARK)
