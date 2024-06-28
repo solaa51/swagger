@@ -3,6 +3,13 @@ go-web框架
 
 ## 待完善计划表
 
+## 中间件 适配singleFlight get post 层面
+
+    这个会影响 请求后的header重置
+    controller的返回也要做响应处理
+        目前为一个请求 直接响应
+        变更为多个请求 [单个返回] 多个赋值
+
 ## 实现路由上保存调用次数：参考这个库https://github.com/alphadose/haxmap实现
     该map仅适用于极少并发写入，大量并发修改
 
