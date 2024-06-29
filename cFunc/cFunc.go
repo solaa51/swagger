@@ -307,6 +307,7 @@ func WriteFile(fileName string, content []byte) error {
 	if err != nil {
 		return err
 	}
+	defer fileInfo.Close()
 
 	writer := bufio.NewWriter(fileInfo)
 	_, err = writer.Write(content)
