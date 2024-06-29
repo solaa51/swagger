@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -741,4 +742,18 @@ func Fnv32a(str string) uint32 {
 // @param shardCount 分配总数
 func HashShard(str string, shardCount int) int {
 	return int(Fnv32a(str)) % shardCount
+}
+
+// MemStats 返回内存占用状态
+func MemStats() string {
+	var ms runtime.MemStats
+	runtime.ReadMemStats(&ms)
+
+	alloc := float64(ms.Alloc) / 1024 / 1024           //堆上内存分配大小
+	totalAlloc := float64(ms.TotalAlloc) / 1024 / 1024 //历史累计分配大小
+	sys := float64(ms.Sys) / 1024 / 1024
+	heapIdle := float64(ms.HeapIdle) / 1024 / 1024
+	heapReleased := float64(ms.HeapReleased) / 1024 / 1024
+
+	return fmt.Sprintf("系统分配:%.3f(M) 堆分配:%.3f(M) 堆累计分配%.3f(M) 空闲内存:%.3f(M) 回收:%.3f(M)", sys, alloc, totalAlloc, heapIdle, heapReleased)
 }
