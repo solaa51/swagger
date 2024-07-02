@@ -71,6 +71,8 @@ func ParseJsonArrayObject(str []byte) ([][]byte, error) {
 // 参考格式：{"a":"b","c":123,"d":[1,2,3],"e":["h","i","j"]}
 // 参考格式：{"a":"b,c","c":123,"d":[1,2,3],"e":["h","i","j"]}
 // 参考格式：{"role_id":165, "auto_operation":"{\"abc\":21212}"}
+// 因为需要支持多层json 所以此方法不处理json中的特殊字符 比如\n \r \t等 [需在使用时自己替换] 转换后会破坏json数据结构
+// strings.ReplaceAll(value, "\\n", "\n")
 func ParseSimpleJson(jsonByte *[]byte) (map[string]string, error) {
 	jsonBtr := *jsonByte
 

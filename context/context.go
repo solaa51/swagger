@@ -77,6 +77,8 @@ func (c *Context) parseBody() error {
 				return err
 			}
 			c.Valid = vid
+		} else {
+			c.Valid, _ = valid.NewValid(c.GetPost, nil)
 		}
 	}
 
