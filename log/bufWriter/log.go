@@ -150,7 +150,7 @@ func Fatal(msg string, args ...any) {
 func caller() *slog.Source {
 	var source *slog.Source
 
-	pc, file, line, ok := runtime.Caller(3)
+	pc, file, line, ok := runtime.Caller(4)
 	if ok {
 		file = filepath.Base(file)
 		funcName := runtime.FuncForPC(pc).Name()
@@ -168,6 +168,8 @@ func caller() *slog.Source {
 			file = filepath.Base(file)
 			funcName := runtime.FuncForPC(pc).Name()
 			fmt.Println(i, "-", file, "--", funcName, "---", line)
+		}else{
+			break
 		}
 	}*/
 
