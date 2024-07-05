@@ -128,7 +128,7 @@ func ParseSimpleJson(jsonByte *[]byte) (map[string]string, error) {
 			} else {
 				strValue = strings.ReplaceAll(strValue, `\"`, `"`)
 			}
-			tiStrs[k] = strings.TrimSpace(strValue)
+			tiStrs[k] = strings.Trim(strValue, "\\t \t")
 			snew.Write(jsonBtr[prevEnd:v[0]])
 			snew.WriteString("{{}}")
 			prevEnd = v[1] + 1
@@ -147,8 +147,8 @@ func ParseSimpleJson(jsonByte *[]byte) (map[string]string, error) {
 		if len(vv) != 2 {
 			return nil, errors.New("json格式错误")
 		}
-		key := strings.TrimSpace(strings.ReplaceAll(vv[0], `"`, ""))
-		val := strings.TrimSpace(vv[1])
+		key := strings.Trim(strings.ReplaceAll(vv[0], `"`, ""), "\\t \t")
+		val := strings.Trim(vv[1], "\\t \t")
 		if val == "{{}}" {
 			arr[key] = tiStrs[rPIndex]
 			rPIndex++
