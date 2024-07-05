@@ -74,7 +74,7 @@ func ParseJsonArrayObject(str []byte) ([][]byte, error) {
 // 因为需要支持多层json 所以此方法不处理json中的特殊字符 比如\n \r \t等 [需在使用时自己替换] 转换后会破坏json数据结构
 // strings.ReplaceAll(value, "\\n", "\n")
 func ParseSimpleJson(jsonByte *[]byte) (map[string]string, error) {
-	jsonBtr := *jsonByte
+	jsonBtr := bytes.TrimSpace(*jsonByte)
 
 	if !json.Valid(jsonBtr) {
 		return nil, errors.New("json格式错误")
@@ -122,13 +122,21 @@ func ParseSimpleJson(jsonByte *[]byte) (map[string]string, error) {
 	} else {
 		prevEnd := 1
 		for k, v := range iis {
-			strValue := string(jsonBtr[v[0]+1 : v[1]])
+			var strValue string
+			if json.Valid(jsonBtr[v[0]+1 : v[1]]) {
+				strValue = string(jsonBtr[v[0]+1 : v[1]])
+			} else {
+				strValue = string(jsonBtr[v[0]+1 : v[1]])
+				strValue = strings.ReplaceAll(strValue, "\\n", "\n")
+				strValue = strings.ReplaceAll(strValue, "\\t", "\t")
+			}
+
 			if v[2] == 0 {
 				strValue = strings.ReplaceAll(strValue, `"`, "")
 			} else {
 				strValue = strings.ReplaceAll(strValue, `\"`, `"`)
 			}
-			tiStrs[k] = strings.Trim(strValue, "\\t \t")
+			tiStrs[k] = strings.TrimSpace(strValue)
 			snew.Write(jsonBtr[prevEnd:v[0]])
 			snew.WriteString("{{}}")
 			prevEnd = v[1] + 1
@@ -147,10 +155,14 @@ func ParseSimpleJson(jsonByte *[]byte) (map[string]string, error) {
 		if len(vv) != 2 {
 			return nil, errors.New("json格式错误")
 		}
-		key := strings.Trim(strings.ReplaceAll(vv[0], `"`, ""), "\\t \t")
-		val := strings.Trim(vv[1], "\\t \t")
+		key := strings.TrimSpace(strings.ReplaceAll(vv[0], `"`, ""))
+		val := strings.TrimSpace(vv[1])
 		if val == "{{}}" {
-			arr[key] = tiStrs[rPIndex]
+			if json.Valid([]byte(tiStrs[rPIndex])) {
+				arr[key] = tiStrs[rPIndex]
+			} else {
+				arr[key] = tiStrs[rPIndex]
+			}
 			rPIndex++
 		} else {
 			arr[key] = val
