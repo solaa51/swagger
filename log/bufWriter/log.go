@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 )
 
@@ -148,30 +149,25 @@ func Fatal(msg string, args ...any) {
 }
 
 func caller() *slog.Source {
-	var source *slog.Source
-
-	pc, file, line, ok := runtime.Caller(4)
-	if ok {
-		file = filepath.Base(file)
-		funcName := runtime.FuncForPC(pc).Name()
-		source = &slog.Source{
-			Function: funcName,
-			File:     file,
-			Line:     line,
-		}
-	}
+	source := &slog.Source{}
 
 	// 调试获取调用文件的层级
-	/*for i := 1; i < 25; i++ {
+	for i := 3; i < 15; i++ {
 		pc, file, line, ok := runtime.Caller(i)
 		if ok {
 			file = filepath.Base(file)
 			funcName := runtime.FuncForPC(pc).Name()
-			fmt.Println(i, "-", file, "--", funcName, "---", line)
-		}else{
-			break
+			if strings.HasPrefix(funcName, "runtime.") {
+				break
+			}
+
+			source.Function = funcName
+			source.File = file
+			source.Line = line
+			continue
 		}
-	}*/
+		break
+	}
 
 	return source
 }
