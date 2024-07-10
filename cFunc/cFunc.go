@@ -771,3 +771,12 @@ func MemStats() string {
 
 	return fmt.Sprintf("系统分配:%.3f(M) 堆分配:%.3f(M) 堆累计分配%.3f(M) 空闲内存:%.3f(M) 回收:%.3f(M)", sys, alloc, totalAlloc, heapIdle, heapReleased)
 }
+
+// JsonMarshalDisEscape json.Marshal禁用转义 系统内默认为转义特殊字符
+func JsonMarshalDisEscape(data any) ([]byte, error) {
+	bf := bytes.NewBuffer(nil)
+	jsonEncoder := json.NewEncoder(bf)
+	jsonEncoder.SetEscapeHTML(false)
+	err := jsonEncoder.Encode(data)
+	return bf.Bytes(), err
+}
