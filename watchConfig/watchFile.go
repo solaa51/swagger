@@ -8,8 +8,8 @@ import (
 )
 
 type watchFile struct {
-	modTime int64 //文件修改时间
 	md5     string
+	modTime int64 //文件修改时间
 	ch      []chan struct{}
 }
 

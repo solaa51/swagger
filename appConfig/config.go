@@ -42,6 +42,11 @@ type RateConfig struct {
 }
 
 type Config struct {
+	Http Http `yaml:"http"`
+
+	// 静态目录配置
+	Static StaticConfig `yaml:"staticDir"`
+
 	//本地local 测试test 预发pre 生产prod
 	//默认为local 其他值则日志不会在标准打印
 	Env string `yaml:"env"`
@@ -49,16 +54,11 @@ type Config struct {
 	//md5加密盐
 	Md5Salt string `yaml:"md5Salt"`
 
-	//服务实例节点ID
-	ServerId int64 `yaml:"serverId"`
-
-	Http Http `yaml:"http"`
-
-	// 静态目录配置
-	Static StaticConfig `yaml:"staticDir"`
-
 	// 全局限流配置
 	Rate RateConfig `yaml:"rateConfig"`
+
+	//服务实例节点ID
+	ServerId int64 `yaml:"serverId"`
 }
 
 // Info 配置信息

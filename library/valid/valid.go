@@ -23,14 +23,14 @@ const (
 
 // Regulation 校验规则
 type Regulation struct {
+	Def       any       //默认值
 	Name      string    //参数名称
 	Desc      string    //参数描述
-	CheckType validType //校验类型
-	Required  bool      //是否必填
+	Reg       string    //正则规则校验
 	Min       int64     //最小值或最小长度
 	Max       int64     //最大值或最大长度
-	Def       any       //默认值
-	Reg       string    //正则规则校验
+	CheckType validType //校验类型
+	Required  bool      //是否必填
 }
 
 type Valid struct {
