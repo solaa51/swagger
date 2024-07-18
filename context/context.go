@@ -26,25 +26,29 @@ func init() {
 
 // Context 处理请求上下文
 type Context struct {
+	StartTime time.Time //记录请求开始处理时间
+
 	Ctx            context.Context
 	ResponseWriter http.ResponseWriter
-	Request        *http.Request
-	StartTime      time.Time //记录请求开始处理时间
 
-	RequestId      int64
+	RetData any //返回数据
+
+	Request *http.Request
+
+	GetPost  url.Values //get参数与 form-data或者x-www-form-urlencoded合集
+	BodyData *[]byte    //body内包含的数据
+
+	Valid *valid.Valid //参数校验
+
 	StructFuncName string //最终调用的structFuncName 如果为方法则为自定义名称 如果为struct则为struct/method
-
-	GetPost  url.Values   //get参数与 form-data或者x-www-form-urlencoded合集
-	BodyData *[]byte      //body内包含的数据
-	Valid    *valid.Valid //参数校验
 
 	ClientIp string //客户端IP
 
-	// 处理返回信息
+	RetError  string //错误信息
+	RequestId int64  //请求ID
+	RetCode   int    //返回码
+
 	CustomRet bool //自定义处理返回信息 跳过统一返回处理
-	RetError  string
-	RetCode   int
-	RetData   any
 }
 
 func NewContext(w http.ResponseWriter, r *http.Request, structFuncName string) *Context {
