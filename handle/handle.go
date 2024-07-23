@@ -130,9 +130,7 @@ func execCall(w http.ResponseWriter, r *http.Request, handler *router.Segment, a
 					slog.String("method", r.Method),
 					slog.String("url", r.URL.String()),
 					slog.String("ip", ctx.ClientIp),
-					slog.String("user-agent", r.UserAgent()),
 					slog.String("paramData", string(pData)),
-					slog.String("body", string(*ctx.BodyData)),
 					slog.String("stackInfo", string(buf[:n])),
 				)
 
