@@ -6,6 +6,7 @@ import (
 	"flag"
 	"github.com/solaa51/swagger/app"
 	"github.com/solaa51/swagger/appConfig"
+	"github.com/solaa51/swagger/appVersion"
 	"github.com/solaa51/swagger/cFunc"
 	"github.com/solaa51/swagger/configFiles"
 	"github.com/solaa51/swagger/handle"
@@ -112,7 +113,7 @@ func start(restart bool) {
 		bufWriter.Fatal("服务启动失败或已被关闭", err, server.Addr, os.Getpid())
 	}()
 
-	bufWriter.Warn("启动服务，监听地址为:", server.Addr, "进程ID为:", os.Getpid())
+	bufWriter.Warn("启动服务，监听地址:", server.Addr, "进程ID:", os.Getpid(), "版本号：", appVersion.Version)
 
 	ss := &appServer{
 		server:   server,
