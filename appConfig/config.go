@@ -47,6 +47,8 @@ type Config struct {
 	// 静态目录配置
 	Static StaticConfig `yaml:"staticDir"`
 
+	AppName string `yaml:"name"`
+
 	//本地local 测试test 预发pre 生产prod
 	//默认为local 其他值则日志不会在标准打印
 	Env string `yaml:"env"`

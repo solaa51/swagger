@@ -113,7 +113,7 @@ func start(restart bool) {
 		bufWriter.Fatal("服务启动失败或已被关闭", err, server.Addr, os.Getpid())
 	}()
 
-	bufWriter.Warn("启动服务，监听地址:", server.Addr, "进程ID:", os.Getpid(), "版本号：", appVersion.Version)
+	bufWriter.Warn("启动服务，监听地址:", server.Addr, "进程ID:", os.Getpid(), "服务名称:", appConfig.Info().AppName, "版本号：", appVersion.Version)
 
 	ss := &appServer{
 		server:   server,
