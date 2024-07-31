@@ -3,6 +3,8 @@ name: "使用案例的ss"
 
 # 环境标识默认为local 本地local 测试test 预发pre 生产prod
 env: "local"
+# 日志环境 默认使用env设置，defaultLogEnv可以覆盖env的设置
+defaultLogEnv: ""
 
 # md5加密盐
 md5Salt: ""

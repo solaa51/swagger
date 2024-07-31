@@ -51,7 +51,8 @@ type Config struct {
 
 	//本地local 测试test 预发pre 生产prod
 	//默认为local 其他值则日志不会在标准打印
-	Env string `yaml:"env"`
+	Env           string `yaml:"env"`
+	DefaultLogEnv string `yaml:"defaultLogEnv"` //默认日志环境配置 默认使用Env的配置，可单独设置，优先级高于Env
 
 	//md5加密盐
 	Md5Salt string `yaml:"md5Salt"`
@@ -170,12 +171,17 @@ func newConfig() *Config {
 	c.check()
 	c.checkHttpConfig()
 
+	env := c.Env
+	if c.DefaultLogEnv != "" {
+		env = c.DefaultLogEnv
+	}
+
 	if c.Env == "" || c.Env == "local" {
 		bufWriter.SetDefaultStdout(true)
 	} else {
 		bufWriter.SetDefaultStdout(false)
 	}
-	bufWriter.SetDefaultLevel(c.Env)
+	bufWriter.SetDefaultLevel(env)
 
 	return c
 }

@@ -206,8 +206,6 @@ func getHttpAddr() string {
 // 设置默认日志设置
 func defaultLogSet() {
 	bufWriter.SetDefaultBuffer(true) //开启缓冲区
-
-	bufWriter.SetDefaultLevel(appConfig.Info().Env)
 }
 
 // 进入守护进程
