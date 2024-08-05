@@ -10,9 +10,9 @@ type SingleFlight struct {
 	g singleflight.Group
 }
 
-func (s *SingleFlight) SingleRun(ctx context.Context, key string, method func(context.Context) (any, error)) (any, error) {
+func (s *SingleFlight) SingleRun(ctx context.Context, key string, method func() (any, error)) (any, error) {
 	result := s.g.DoChan(key, func() (interface{}, error) {
-		return method(ctx)
+		return method()
 	})
 
 	//防止 一个出错，全部出错
@@ -35,6 +35,6 @@ func init() {
 	defaultGroup = &SingleFlight{}
 }
 
-func SingleRun(ctx context.Context, key string, method func(context.Context) (any, error)) (any, error) {
+func SingleRun(ctx context.Context, key string, method func() (any, error)) (any, error) {
 	return defaultGroup.SingleRun(ctx, key, method)
 }

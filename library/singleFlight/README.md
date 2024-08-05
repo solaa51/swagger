@@ -59,8 +59,7 @@ func main() {
 	time.Sleep(time.Second * 10)
 }
 
-func jisuan(ctx context.Context) (any, error) {
-	fmt.Println("携带值", ctx.Value("test"))
+func jisuan() (any, error) {
 	time.Sleep(time.Second * 2)
 	return time.Now().UnixMicro(), nil
 }
