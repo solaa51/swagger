@@ -4,8 +4,8 @@ USER = $(shell id -u -n)
 DATE = $(shell date '+%Y-%m-%d %H:%M:%S')
 
 .PHONY: build
-VERSION = v1.1.8
-REMARK = "累计错误更新"
+VERSION = v2.0.0
+REMARK = "优化升级重启方案"
 build:
 	git add .
 	git commit -m $(REMARK)
