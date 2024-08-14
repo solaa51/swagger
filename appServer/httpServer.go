@@ -28,26 +28,28 @@ import (
 func Run() {
 	var (
 		d bool
-		g bool
+		//	g bool
 	)
 	flag.BoolVar(&d, "d", false, "后台执行")
-	flag.BoolVar(&g, "g", false, "平滑重启，不需要手动调用")
+	//flag.BoolVar(&g, "g", false, "平滑重启，不需要手动调用")
 
 	flag.Parse()
 
 	daemon(d)
 
-	start(g)
+	start()
 
 	app.ListenSignal()
 }
 
-func start(restart bool) {
+func start() {
 	var ln net.Listener
 	var httpAddr string
 	var err error
 
-	if restart {
+	//自定义环境变量 判断是否是平滑重启
+	innerReload := os.Getenv("INNER_RELOAD")
+	if innerReload == "TRUE" {
 		//启动命令中包含参数 热重启时，从socket文件描述符 重新启动一个监听
 		//当存在监听socket时 socket的文件描述符就是3 所以从本进程的3号文件描述符 恢复socket监听
 		f := os.NewFile(3, "")
@@ -146,7 +148,8 @@ func (s *appServer) restart() {
 		return
 	}
 
-	cmd := exec.Command(os.Args[0], []string{"-g"}...)
+	//cmd := exec.Command(os.Args[0], []string{"-g"}...)
+	cmd := exec.Command(os.Args[0], []string{}...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.ExtraFiles = []*os.File{ff} //重用原有的socket文件描述符

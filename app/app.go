@@ -61,6 +61,10 @@ func ListenSignal() {
 		case syscall.SIGHUP: //自定义的更新重启信号
 			//fmt.Println("重启信号")
 			signal.Stop(ch) //关闭信号通道
+
+			// 自定义环境变量，用来判断是否是重启
+			_ = os.Setenv("INNER_RELOAD", "TRUE")
+
 			a.restartFunc()
 			a.closeFunc()
 
