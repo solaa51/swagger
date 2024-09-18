@@ -3,6 +3,18 @@ go-web框架
 
 ## 待完善计划表
 
+## go 1.23新的unique包得使用起来
+    可先用到
+    json的解析上
+    配置环境变量的比较上
+    日志级别的比较
+
+## 支持systemd配置文件
+    后台执行需要支持 -d 和 环境变量 两种形式
+        -d 用于手动启动
+        环境变量用于systemd配置文件配置启动
+    自更新时会出现2次启动。其中一次就会失败 该问题还未解决
+
 ## 中间件 适配singleFlight get post 层面
 
     这个会影响 请求后的header重置
@@ -62,10 +74,7 @@ go-web框架
         不支持持久化
             需要过期支持
 
-## json参数校验规则 是否能继续加强。
-    大部分post提交的参数都不会很复杂，也不太多。解析字符串的方式可增加对参数存在性的校验
-    复杂性的json数据格式请直接使用官方json解析结构体，这种情况下，对参数的校验也要求不高
-    经测验解析json比form-data性能要高5%左右
+
 
 ## protoc文件处理 集成到 Makefile文件中
 
@@ -74,6 +83,11 @@ go-web框架
 
     生成客户端 服务端 及调用结构
     protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative hello.proto
+
+## json参数校验规则 是否能继续加强。 [完成]
+    大部分post提交的参数都不会很复杂，也不太多。解析字符串的方式可增加对参数存在性的校验
+    复杂性的json数据格式请直接使用官方json解析结构体，这种情况下，对参数的校验也要求不高
+    经测验解析json比form-data性能要高5%左右
 
 ## atomic并发安全kv库 [待项目中实践] 
     [当前性能太辣鸡]
