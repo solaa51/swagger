@@ -259,19 +259,6 @@ func Sha256File(filePath string) (string, error) {
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
-// ComparePoint 比较数据是否相同 相同返回true
-//
-// > - 布尔型、数值类型、字符串类型、指针类型和channel是严格可比较的。
-//
-// > - 如果结构体类型的所有字段的类型都是严格可比较的，那么该结构体类型就是严格可比较的。
-//
-// > - 如果数组元素的类型是严格可比较的，那么该数组类型就是严格可比较的。
-//
-// > - 如果类型形参的类型集合中的所有类型都是严格可比较的，那么该类型形参就是严格可比较的。
-func ComparePoint[T comparable](t1, t2 T) bool {
-	return t1 == t2
-}
-
 // UTF82GBK utf8编码 转 gbk编码
 func UTF82GBK(str []byte) ([]byte, error) {
 	r := transform.NewReader(bytes.NewReader(str), simplifiedchinese.GBK.NewEncoder())
@@ -292,18 +279,6 @@ func Mod(id int64) int64 {
 	shu := crc32.ChecksumIEEE([]byte(str))
 
 	return int64(math.Mod(float64(shu), 10))
-}
-
-// FloatStringToInt float类型的字符串转为整数
-// point 小数位数
-func FloatStringToInt(str string, point float64) int64 {
-	s, err := strconv.ParseFloat(str, 10)
-	if err != nil {
-		return 0
-	}
-
-	i := math.Pow(10, point)
-	return int64(s * i)
 }
 
 // WriteFile 追加写入文件内容
@@ -412,17 +387,6 @@ func GetFreePort() (string, error) {
 
 	return port, nil
 }
-
-/*// CanTypes 基础类型泛型限定
-type CanTypes interface {
-	~int | ~int8 | string | []byte
-}
-
-func Md5T[T CanTypes](in T) string {
-	m := md5.New()
-	b := m.Sum([]byte(time.Now().String()))
-	return hex.EncodeToString(b)
-}*/
 
 // ConvertStr 将数据库中的表字段 转换为go中使用的名称
 func ConvertStr(col string) string {
@@ -766,10 +730,11 @@ func MemStats() string {
 	alloc := float64(ms.Alloc) / 1024 / 1024           //堆上内存分配大小
 	totalAlloc := float64(ms.TotalAlloc) / 1024 / 1024 //历史累计分配大小
 	sys := float64(ms.Sys) / 1024 / 1024
+	heapAlloc := float64(ms.HeapAlloc) / 1024 / 1024
 	heapIdle := float64(ms.HeapIdle) / 1024 / 1024
 	heapReleased := float64(ms.HeapReleased) / 1024 / 1024
 
-	return fmt.Sprintf("系统分配:%.3f(M) 堆分配:%.3f(M) 堆累计分配%.3f(M) 空闲内存:%.3f(M) 回收:%.3f(M)", sys, alloc, totalAlloc, heapIdle, heapReleased)
+	return fmt.Sprintf("系统分配:%.3f(M) 堆分配:%.3f(M) 堆累计分配%.3f(M) heapAlloc:%.3f(M) 空闲内存:%.3f(M) 回收:%.3f(M)", sys, alloc, totalAlloc, heapAlloc, heapIdle, heapReleased)
 }
 
 // JsonMarshalDisEscape json.Marshal禁用转义 系统内默认为转义特殊字符
