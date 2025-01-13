@@ -371,6 +371,21 @@ func LocalIPV4() string {
 	return ""
 }
 
+// OutboundIP 获取本机外网IP
+func OutboundIP() (string, error) {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close()
+
+	if ip, ok := conn.LocalAddr().(*net.UDPAddr); ok {
+		return ip.IP.String(), nil
+	}
+
+	return "", nil
+}
+
 // GetFreePort 获取一个可用的端口号
 func GetFreePort() (string, error) {
 	addr, err := net.ResolveTCPAddr("tcp", "127.0.0.1:0")
